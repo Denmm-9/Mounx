@@ -12,7 +12,7 @@ MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0.5
 MainFrame.Position = UDim2.new(0.8, 0, 0.5, -100)
-MainFrame.Size = UDim2.new(0, 140, 0, 160)
+MainFrame.Size = UDim2.new(0, 150, 0, 160)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
@@ -59,18 +59,60 @@ local function createButton(name, position, remoteFunction)
 end
 
 createButton("Farm", 0.1, function()
-    for i = 1, 8 do -- Itera del 1 al 8
-        local snowPart = workspace.HitParts:FindFirstChild("Snow" .. i) -- Encuentra Snow1, Snow2, ..., Snow8
+    -- Obtener el jugador y su posición
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+    local closestSnowPart = nil
+    local closestHitPart = nil
+    local closestDistanceSnow = math.huge  -- Iniciamos con un valor muy alto
+    local closestDistanceHit = math.huge   -- Iniciamos con un valor muy alto
+
+    -- Iterar sobre las partes de Snow del 1 al 8 y encontrar la más cercana
+    for i = 1, 8 do
+        local snowPart = workspace.HitParts:FindFirstChild("Snow" .. i)
         if snowPart then
-            local args = {
-                [1] = snowPart, -- Parte dinámica del bucle
-                [2] = "Snow8",
-                [3] = "GoldenFlame"
-            }
-            game:GetService("ReplicatedStorage").Events.e8eGb8RgRXFcug8q:FireServer(unpack(args))
+            local distance = (humanoidRootPart.Position - snowPart.Position).Magnitude
+            if distance < closestDistanceSnow then
+                closestDistanceSnow = distance
+                closestSnowPart = snowPart
+            end
         end
     end
+
+    -- Iterar sobre las partes de HitParts del 1 al 8 y encontrar la más cercana
+    for i = 1, 8 do
+        local hitPart = workspace.HitParts:FindFirstChild("HitPart" .. i)
+        if hitPart then
+            local distance = (humanoidRootPart.Position - hitPart.Position).Magnitude
+            if distance < closestDistanceHit then
+                closestDistanceHit = distance
+                closestHitPart = hitPart
+            end
+        end
+    end
+
+    -- Ahora ejecutamos la acción dependiendo de cuál esté más cerca del jugador
+    if closestSnowPart then
+        local args = {
+            [1] = closestSnowPart,  -- La parte de nieve más cercana
+            [2] = "Snow8",          -- Puedes ajustar esto según sea necesario
+            [3] = "GoldenFlame"     -- El valor o tipo asociado al objeto
+        }
+        game:GetService("ReplicatedStorage").Events.e8eGb8RgRXFcug8q:FireServer(unpack(args))
+    end
+
+    if closestHitPart then
+        local args = {
+            [1] = closestHitPart,  -- La parte de HitPart más cercana
+            [2] = "Hit8",          -- Puedes ajustar esto según sea necesario
+            [3] = "GoldenFlame"    -- El valor o tipo asociado al objeto
+        }
+        game:GetService("ReplicatedStorage").Events.e8eGb8RgRXFcug8q:FireServer(unpack(args))
+    end
 end)
+
 
 createButton("AutoBuy", 0.3, function()
     local args = {
@@ -93,5 +135,6 @@ createButton("Inf Gems", 0.5, function()
         end
     end
 end)
+
 
 
