@@ -89,7 +89,7 @@ createButton("Inf Gems", 0.5, function()
     for _, gem in pairs(workspace.Gems.Gems:GetChildren()) do
         if gem:IsA("BasePart") or gem:IsA("MeshPart") then
             -- Mover cada gema a la posición del jugador local
-            gem.CFrame = humanoidRootPart.CFrame + Vector3.new(0, 3, 0) -- Coloca la gema justo arriba del jugador
+            gem.CFrame = humanoidRootPart.CFrame + Vector3.new(0, 2, 0) -- Coloca la gema justo arriba del jugador
         end
     end
 end)
