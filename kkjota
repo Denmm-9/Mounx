@@ -1,85 +1,14 @@
-local ScreenGui = Instance.new("ScreenGui")
-local button = Instance.new("TextButton")
-local UICorner = Instance.new("UICorner")
+createButton("Inf Gems", 0.5, function()
+    -- Obtener la posición del jugador local
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
--- Configuración del ScreenGui
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-ScreenGui.ResetOnSpawn = false
-
--- Configuración del botón
-button.Name = "FarmButton"
-button.Parent = ScreenGui
-button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-button.BackgroundTransparency = 0.3
-button.Position = UDim2.new(0.5, -75, 0.5, -15) -- Posición centrada
-button.Size = UDim2.new(0, 150, 0, 30)
-button.Font = Enum.Font.SourceSansBold
-button.Text = "Farm"
-button.TextColor3 = Color3.fromRGB(255, 255, 255)
-button.TextSize = 14
-
--- Bordes redondeados
-UICorner.Parent = button
-
--- Lógica para arrastrar el botón
-local UserInputService = game:GetService("UserInputService")
-local dragging
-local dragInput
-local dragStart
-local startPos
-
-button.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = button.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-button.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        button.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
--- Lógica del botón (activación de función)
-local active = false
-local loop
-
-button.MouseButton1Click:Connect(function()
-    active = not active
-    button.BackgroundColor3 = active and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(45, 45, 45)
-
-    if active then
-        loop = game:GetService("RunService").Heartbeat:Connect(function()
-            -- Código del evento remoto
-            local args = {
-                [1] = workspace.HitParts.Snow1,
-                [2] = "Snow8",
-                [3] = "GoldenFlame"
-            }
-            game:GetService("ReplicatedStorage").Events.e8eGb8RgRXFcug8q:FireServer(unpack(args))
-        end)
-    else
-        if loop then
-            loop:Disconnect()
-            loop = nil
+    -- Iterar sobre todas las gemas en workspace.Gems.Gems
+    for _, gem in pairs(workspace.Gems.Gems:GetChildren()) do
+        if gem:IsA("BasePart") or gem:IsA("MeshPart") then
+            -- Mover cada gema a la posición del jugador local
+            gem.CFrame = humanoidRootPart.CFrame + Vector3.new(0, 3, 0) -- Coloca la gema justo arriba del jugador
         end
     end
 end)
