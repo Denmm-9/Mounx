@@ -61,7 +61,6 @@ local function bitePlayer(targetCharacter)
                 [3] = part
             }
             BiteEvent:FireServer(unpack(args))
-            print("Mordido en: " .. partName .. " de " .. targetCharacter.Name)
         end
     end
 end
@@ -95,7 +94,6 @@ local function biteQueens()
                             [3] = queenRootPart
                         }
                         BiteEvent:FireServer(unpack(args))
-                        print("Mordida la Reina de: " .. nationName)
                     end
                 end
             end
