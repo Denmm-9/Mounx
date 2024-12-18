@@ -52,7 +52,7 @@ local function createButton(name, position, remoteFunction)
    end)
 end
 
-createButton("KillAura", 0.1, function()
+createButton("KillAura", 0.1, getgenv().KillAura)
 
 getgenv().KillAura = true
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
