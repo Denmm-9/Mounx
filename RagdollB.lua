@@ -52,7 +52,43 @@ local function createButton(name, position, remoteFunction)
    end)
 end
 
-getgenv().KillAura = false
+getgenv().KillAura = false 
+
+
+local function createButton(name, position, remoteFunction)
+    local button = Instance.new("TextButton")
+    button.Name = name
+    button.Parent = MainFrame
+    button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    button.BackgroundTransparency = 0.3
+    button.Position = UDim2.new(0.1, 0, position, 0)
+    button.Size = UDim2.new(0.8, 0, 0, 30)
+    button.Font = Enum.Font.SourceSansBold
+    button.Text = name
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 14
+
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.Parent = button
+
+    local loop = nil 
+
+    button.MouseButton1Click:Connect(function()
+        getgenv().KillAura = not getgenv().KillAura 
+        button.BackgroundColor3 = getgenv().KillAura and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(45, 45, 45)
+
+        if getgenv().KillAura then
+
+            loop = game:GetService("RunService").Heartbeat:Connect(remoteFunction)
+        else
+
+            if loop then
+                loop:Disconnect()
+                loop = nil
+            end
+        end
+    end)
+end
 
 local function killAuraLogic()
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -60,34 +96,25 @@ local function killAuraLogic()
     local dataRemoteEvent = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
     local killAuraRange = 27
 
-    if getgenv().KillAura then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
 
-                if distance < killAuraRange and tool then
-                    local toolName = tool.Name
-                    local args = {
-                        [1] = {
-                            [1] = {toolName .. "Hit"},
-                            [2] = "\4",
-                            [3] = {player.Character, toolName},
-                            [4] = "\6"
-                        }
+            if distance < killAuraRange and tool then
+                local toolName = tool.Name
+                local args = {
+                    [1] = {
+                        [1] = {toolName .. "Hit"},
+                        [2] = "\4",
+                        [3] = {player.Character, toolName},
+                        [4] = "\6"
                     }
-                    dataRemoteEvent:FireServer(unpack(args))
-                end
+                }
+                dataRemoteEvent:FireServer(unpack(args))
             end
         end
     end
 end
 
-createButton("KillAura", 0.1, function()
-    getgenv().KillAura = not getgenv().KillAura 
-end)
-
-game:GetService("RunService").Heartbeat:Connect(function()
-    killAuraLogic()
-end)
-
+createButton("KillAura", 0.1, killAuraLogic)
