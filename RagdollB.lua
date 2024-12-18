@@ -52,7 +52,7 @@ local function createButton(name, position, remoteFunction)
    end)
 end
 
-createButton("Farm", 0.1, function()
+createButton("KillAura", 0.1, function()
 
 getgenv().KillAura = true
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -96,6 +96,6 @@ while true do
             end
         end
     end
-    wait(0.1)
+    wait(0.2)
 end
 end)
