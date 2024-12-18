@@ -107,8 +107,7 @@ end
 local function biteQueens()
     local chambersFolder = Workspace:FindFirstChild("Map"):FindFirstChild("Chambers")
     if not chambersFolder then return end
-
-    -- Nombres de las naciones
+   
     local nations = {
         "Concrete Clan",
         "Fire Nation",
