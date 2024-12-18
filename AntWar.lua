@@ -16,56 +16,18 @@ MainFrame.Draggable = true
 
 UICorner.Parent = MainFrame
 
-local function createButton(name, position, remoteFunction)
-   local button = Instance.new("TextButton")
-   button.Name = name
-   button.Parent = MainFrame
-   button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-   button.BackgroundTransparency = 0.3
-   button.Position = UDim2.new(0.1, 0, position, 0)
-   button.Size = UDim2.new(0.8, 0, 0, 30)
-   button.Font = Enum.Font.SourceSansBold
-   button.Text = name
-   button.TextColor3 = Color3.fromRGB(255, 255, 255)
-   button.TextSize = 14
-
-   local buttonCorner = Instance.new("UICorner")
-   buttonCorner.Parent = button
-
-   local active = false
-   local loop = nil
-
-   button.MouseButton1Click:Connect(function()
-       active = not active
-       button.BackgroundColor3 = active and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(45, 45, 45)
-
-       if active then
-           loop = game:GetService("RunService").Heartbeat:Connect(function()
-               pcall(remoteFunction) 
-           end)
-       else
-           if loop then
-               loop:Disconnect()
-               loop = nil
-           end
-       end
-   end)
-end
-
-
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
+local BiteEvent = ReplicatedStorage:WaitForChild("ServerEvents"):WaitForChild("Bite")
+
+local KillRange = 25
+local isRunning = false  
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-local BiteEvent = ReplicatedStorage:WaitForChild("ServerEvents"):WaitForChild("Bite") 
-
-local KillRange = 25 
-local isRunning = false 
-
 
 local function bitePlayer(targetCharacter)
     local humanoid = targetCharacter:FindFirstChild("Humanoid")
@@ -143,8 +105,8 @@ end
 
 local function startKillAura()
     isRunning = true  
-    
     while isRunning do
+      
         for _, player in pairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                 if player.Team ~= LocalPlayer.Team then
@@ -159,20 +121,53 @@ local function startKillAura()
             end
         end
 
-        biteQueens()
-
-        wait(0.1)
+        biteQueens() 
+        wait(0.1) 
     end
 end
 
 local function stopKillAura()
-    isRunning = false
+    isRunning = false 
 end
 
-createButton("KillAura", 0.2, function()
+local function toggleKillAura()
     if isRunning then
-        stopKillAura()
+        stopKillAura()  
     else
-        startKillAura()
+        startKillAura()  
     end
+end
+
+LocalPlayer.CharacterAdded:Connect(function()
+
+    Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 end)
+
+local function createButton(name, position)
+    local button = Instance.new("TextButton")
+    button.Name = name
+    button.Parent = MainFrame
+    button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    button.BackgroundTransparency = 0.3
+    button.Position = UDim2.new(0.1, 0, position, 0)
+    button.Size = UDim2.new(0.8, 0, 0, 30)
+    button.Font = Enum.Font.SourceSansBold
+    button.Text = name
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 14
+
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.Parent = button
+
+    local active = false
+
+    button.MouseButton1Click:Connect(function()
+        active = not active
+        button.BackgroundColor3 = active and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(45, 45, 45)
+
+        toggleKillAura()  
+    end)
+end
+
+createButton("KillAura", 0.2)
