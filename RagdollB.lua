@@ -52,39 +52,42 @@ local function createButton(name, position, remoteFunction)
    end)
 end
 
-getgenv().KillAura = function()
+getgenv().KillAura = false
+
+local function killAuraLogic()
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local Players = game:GetService("Players")
     local dataRemoteEvent = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
-    local killAuraRange = 27 
+    local killAuraRange = 27
 
-    for _, player in pairs(Players:GetPlayers()) do
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            if player == game.Players.LocalPlayer then
-                continue
-            end
+    if getgenv().KillAura then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
 
-            local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            local character = game.Players.LocalPlayer.Character
-            local tool = character:FindFirstChildOfClass("Tool")
-
-            if distance < killAuraRange and tool then
-                local toolName = tool.Name  
-                local args = {
-                    [1] = {
-                        [1] = {toolName .. "Hit"}, 
-                        [2] = "\4",  
-                        [3] = {
-                            [1] = player.Character,
-                            [2] = toolName  
-                        },
-                        [4] = "\6" 
+                if distance < killAuraRange and tool then
+                    local toolName = tool.Name
+                    local args = {
+                        [1] = {
+                            [1] = {toolName .. "Hit"},
+                            [2] = "\4",
+                            [3] = {player.Character, toolName},
+                            [4] = "\6"
+                        }
                     }
-                }
-                dataRemoteEvent:FireServer(unpack(args))
+                    dataRemoteEvent:FireServer(unpack(args))
+                end
             end
         end
     end
 end
 
-createButton("KillAura", 0.1, getgenv().KillAura)
+createButton("KillAura", 0.1, function()
+    getgenv().KillAura = not getgenv().KillAura 
+end)
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    killAuraLogic()
+end)
+
