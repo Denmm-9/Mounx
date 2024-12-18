@@ -52,50 +52,39 @@ local function createButton(name, position, remoteFunction)
    end)
 end
 
-createButton("KillAura", 0.1, getgenv().KillAura)
+getgenv().KillAura = function()
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local Players = game:GetService("Players")
+    local dataRemoteEvent = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+    local killAuraRange = 27 
 
-getgenv().KillAura = true
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
-local dataRemoteEvent = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
-local killAuraRange = 27 
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            if player == game.Players.LocalPlayer then
+                continue
+            end
 
-local function executeKillAura(targetPlayer, tool)
-    local toolName = tool.Name  
-    local args = {
-        [1] = {
-            [1] = {toolName .. "Hit"}, 
-            [2] = "\4",  
-            [3] = {
-                [1] = targetPlayer.Character,
-                [2] = toolName  
-            },
-            [4] = "\6" 
-        }
-    }
+            local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            local character = game.Players.LocalPlayer.Character
+            local tool = character:FindFirstChildOfClass("Tool")
 
-    dataRemoteEvent:FireServer(unpack(args))
-end
-
-while true do
-    if getgenv().KillAura then 
-        for _, player in pairs(Players:GetPlayers()) do
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                if player == game.Players.LocalPlayer then
-                    continue
-                end
-
-                local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-
-                local character = game.Players.LocalPlayer.Character
-                local tool = character:FindFirstChildOfClass("Tool")
-
-                if distance < killAuraRange and tool then
-                    executeKillAura(player, tool) 
-                end
+            if distance < killAuraRange and tool then
+                local toolName = tool.Name  
+                local args = {
+                    [1] = {
+                        [1] = {toolName .. "Hit"}, 
+                        [2] = "\4",  
+                        [3] = {
+                            [1] = player.Character,
+                            [2] = toolName  
+                        },
+                        [4] = "\6" 
+                    }
+                }
+                dataRemoteEvent:FireServer(unpack(args))
             end
         end
     end
-    wait(0.2)
 end
-end)
+
+createButton("KillAura", 0.1, getgenv().KillAura)
