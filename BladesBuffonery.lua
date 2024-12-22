@@ -45,7 +45,7 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 getgenv().KillAuraEnabled = false
-local killAuraRadius = 6 
+local killAuraRadius = 50 
 
 local function getPlayersInRadius(rootPart)
     local playersInRadius = {}
