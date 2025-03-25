@@ -4,17 +4,21 @@ local Window = Flux:Window("Hitbox Expand", "xererecas", Color3.fromRGB(255, 110
 
 local MainTab = Window:Tab("Main", "http://www.roblox.com/asset/?id=4483345998")
 
+local function expandHitbox(hitbox)
+    hitbox.Size = Vector3.new(20, 20, 20)
+    hitbox.CanCollide = false
+    hitbox.Transparency = 0.7
+    hitbox.Color = Color3.fromRGB(255, 255, 0)
+end
+
 local function expandNonPlayerHitbox()
     for _, npc in ipairs(game.Workspace:GetDescendants()) do
         pcall(function()
             if npc:IsA("Model") and npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") then
                 if not game.Players:GetPlayerFromCharacter(npc) then
                     local hitbox = npc:FindFirstChild("Head")
-                    if hitbox then
-                        hitbox.Size = Vector3.new(20, 20, 20)
-                        hitbox.CanCollide = false
-                        hitbox.Transparency = 0.9
-                        hitbox.Color = Color3.fromRGB(255, 255, 255)
+                    if head and head:IsA("BasePart") then
+                        expandHitbox(hitbox)
                     end
                 end
             end
@@ -26,14 +30,9 @@ local function expandPlayerHitbox()
     local localPlayer = game.Players.LocalPlayer
     for _, player in ipairs(game.Players:GetPlayers()) do
         pcall(function()
-            if player ~= localPlayer and player.Team ~= localPlayer.Team and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local hitbox = player.Character:FindFirstChild("HumanoidRootPart")
-                if hitbox then
-                    hitbox.Size = Vector3.new(20, 20, 20)
-                    hitbox.CanCollide = false
-                    hitbox.Transparency = 0.9
-                    hitbox.Color = Color3.fromRGB(255, 255, 255)
-                end
+            if player ~= localPlayer and player.Team ~= localPlayer.Team and player.Character then
+                local hitbox = player.Character:FindFirstChild("Head")
+                expandHitbox(hitbox) 
             end
         end)
     end
@@ -43,14 +42,9 @@ local function expandAllPlayerHitboxes()
     local localPlayer = game.Players.LocalPlayer
     for _, player in ipairs(game.Players:GetPlayers()) do
         pcall(function()
-            if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local hitbox = player.Character:FindFirstChild("HumanoidRootPart")
-                if hitbox then
-                    hitbox.Size = Vector3.new(20, 20, 20)
-                    hitbox.CanCollide = false
-                    hitbox.Transparency = 0.9
-                    hitbox.Color = Color3.fromRGB(255, 255, 255)
-                end
+            if player ~= localPlayer and player.Character then
+                local hitbox = player.Character:FindFirstChild("Head")
+                expandHitbox(hitbox) 
             end
         end)
     end
