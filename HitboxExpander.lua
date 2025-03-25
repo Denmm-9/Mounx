@@ -12,7 +12,7 @@ local Flux = loadstring(game:HttpGet("https://raw.githubusercontent.com/weakhoes
                      local hitbox = npc:FindFirstChild("Head")
                      if hitbox then
                          print("Npcs Hitbox Head done")
-                         hitbox.Size = Vector3.new(20, 20, 20)
+                         hitbox.Size = Vector3.new(5, 5, 5)
                          hitbox.CanCollide = false
                          hitbox.Transparency = 0.7
                          hitbox.Color = Color3.fromRGB(255, 255, 0)
