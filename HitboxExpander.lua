@@ -16,7 +16,7 @@ local function expandNonPlayerHitbox()
         pcall(function()
             if npc:IsA("Model") and npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") then
                 if not game.Players:GetPlayerFromCharacter(npc) then
-                    local hitbox = npc:FindFirstChild("Head")
+                    local hitbox = npc:FindFirstChild("HumanoidRootPart")
                     if head and head:IsA("BasePart") then
                         expandHitbox(hitbox)
                     end
@@ -31,7 +31,7 @@ local function expandPlayerHitbox()
     for _, player in ipairs(game.Players:GetPlayers()) do
         pcall(function()
             if player ~= localPlayer and player.Team ~= localPlayer.Team and player.Character then
-                local hitbox = player.Character:FindFirstChild("Head")
+                local hitbox = player.Character:FindFirstChild("HumanoidRootPart")
                 expandHitbox(hitbox) 
             end
         end)
@@ -43,7 +43,7 @@ local function expandAllPlayerHitboxes()
     for _, player in ipairs(game.Players:GetPlayers()) do
         pcall(function()
             if player ~= localPlayer and player.Character then
-                local hitbox = player.Character:FindFirstChild("Head")
+                local hitbox = player.Character:FindFirstChild("HumanoidRootPart")
                 expandHitbox(hitbox) 
             end
         end)
