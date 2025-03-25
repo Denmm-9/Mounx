@@ -9,8 +9,9 @@ local Flux = loadstring(game:HttpGet("https://raw.githubusercontent.com/weakhoes
          pcall(function()
              if npc:IsA("Model") and npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") then
                  if not game.Players:GetPlayerFromCharacter(npc) then
-                     local hitbox = npc:FindFirstChild("HumanoidRootPart")
+                     local hitbox = npc:FindFirstChild("Head")
                      if hitbox then
+                         print("Npcs Hitbox Head done")
                          hitbox.Size = Vector3.new(20, 20, 20)
                          hitbox.CanCollide = false
                          hitbox.Transparency = 0.7
