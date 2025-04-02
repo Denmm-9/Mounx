@@ -18,6 +18,7 @@ local Window = Library:CreateWindow({
 local MainTab = Window:AddTab("Main Features", "user")
 local SettingsTab = Window:AddTab("Config", "settings")
 local KillAuraGroup = MainTab:AddLeftGroupbox("KillAura")
+local StaffHopGroup = MainTab:AddRightGroupbox("Misc")
 
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
@@ -97,15 +98,18 @@ SettingsGroup:AddLabel("Menu bind")
 Library.ToggleKeybind = Options.MenuKeybind 
 
 Options.MenuKeybind:OnChanged(function()
-    Library:Notify('Menu toggle key changed to [' .. Options.MenuKeybind.Value .. ']')
 end)
 
 SettingsGroup:AddButton("Server Hop", function()
+    Library:Notify("Server hopping...")
+    wait(0.2)
     ServerHop()
 end)
 
 SettingsGroup:AddButton("Unload", function()
     isRunning = false
+    Library:Notify("Unloading...")
+    wait(0.6)
     Library:Unload()
 end)
 
@@ -249,6 +253,63 @@ ArrowsGroup:AddToggle("Enable Arrows", {
                 arrow:Remove()
             end
             arrows = {} 
+        end
+    end
+})
+
+local StaffHopEnabled = false 
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+
+local StaffGroupIds = {14131124, 34671275, 35688762, 33235657} 
+
+local AllowedRanks = {
+    ["Moderator"] = true,
+    ["Admin"] = true,
+    ["Developer"] = true
+}
+
+local function isStaff(player)
+    for _, groupId in pairs(StaffGroupIds) do
+        local success, rank = pcall(function()
+            return player:GetRoleInGroup(groupId) 
+        end)
+
+        if success and rank and AllowedRanks[rank] then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function checkForStaff()
+    for _, player in pairs(Players:GetPlayers()) do
+        if isStaff(player) then
+            Library:Notify("Staff detected: " .. player.Name .. " - Hopping server...")
+            ServerHop()
+            break
+        end
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    if StaffHopEnabled then
+        task.wait(2) 
+        if isStaff(player) then
+            Library:Notify("Staff detected: " .. player.Name .. " - Hopping server...")
+            ServerHop()
+        end
+    end
+end)
+
+StaffHopGroup:AddToggle("DetectarStaff", {
+    Text = "Staff Detect",
+    Default = false,
+    Callback = function(state)
+        StaffHopEnabled = state
+        if state then
+            checkForStaff()
         end
     end
 })
