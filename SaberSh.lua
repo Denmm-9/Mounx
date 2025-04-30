@@ -1,8 +1,16 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local LightsaberRemotes = ReplicatedStorage:WaitForChild("LightsaberRemotes")
+local UpdateBlockDirection = LightsaberRemotes:WaitForChild("UpdateBlockDirection")
+
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
 
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
 MainFrame.Name = "MainFrame"
@@ -40,22 +48,18 @@ local function createButton(name, position, onClickFunction)
     end)
 end
 
--- Expandir Hitboxes
+-- Expand Hitboxes
 local expandHitboxesConnection
 
 local function expandAllPlayerHitboxes()
-    local localPlayer = game.Players.LocalPlayer
-
-    for _, player in ipairs(game.Players:GetPlayers()) do
+    for _, player in ipairs(Players:GetPlayers()) do
         pcall(function()
-            if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local hitbox = player.Character:FindFirstChild("HumanoidRootPart")
-                if hitbox then
-                    hitbox.Size = Vector3.new(11, 11, 11)
-                    hitbox.CanCollide = false
-                    hitbox.Transparency = 0.9
-                    hitbox.Color = Color3.fromRGB(255, 255, 255)
-                end
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local hitbox = player.Character.HumanoidRootPart
+                hitbox.Size = Vector3.new(11, 11, 11)
+                hitbox.CanCollide = false
+                hitbox.Transparency = 0.9
+                hitbox.Color = Color3.fromRGB(255, 255, 255)
             end
         end)
     end
@@ -63,7 +67,7 @@ end
 
 createButton("Expand Hitboxes", 0.1, function(active)
     if active then
-        expandHitboxesConnection = game:GetService("RunService").Heartbeat:Connect(function()
+        expandHitboxesConnection = RunService.Heartbeat:Connect(function()
             expandAllPlayerHitboxes()
         end)
     else
@@ -75,36 +79,22 @@ createButton("Expand Hitboxes", 0.1, function(active)
 end)
 
 -- AntiSlap
-local SlappedModule = require(game:GetService("ReplicatedStorage").LightsaberModules.SharedBehavior.Slapped)
-local LightsaberRemotes = game:GetService("ReplicatedStorage").LightsaberRemotes
-
-local originalSlapped = SlappedModule["Slapped"]
+local SlappedModule = require(ReplicatedStorage.LightsaberModules.SharedBehavior.Slapped)
+local originalSlapped = SlappedModule.Slapped
 
 local function enableAntiSlap()
-    SlappedModule["Slapped"] = function(u14, p15, p16, p17)
-        if u14 and u14.Character and u14.Character == game.Players.LocalPlayer.Character then
-            print("[HOOK] Slapped interceptado. Forzando GetUp.")
-
+    SlappedModule.Slapped = function(u14, p15, p16, p17)
+        if u14 and u14.Character and u14.Character == LocalPlayer.Character then
+            print("[HOOKED]")
             task.spawn(function()
                 if u14.anims then
-                    if u14.anims.SlappedLegs then
-                        u14.anims.SlappedLegs:Stop()
-                    end
-                    if u14.anims.SlappedArms then
-                        u14.anims.SlappedArms:Stop()
-                    end
+                    if u14.anims.SlappedLegs then u14.anims.SlappedLegs:Stop() end
+                    if u14.anims.SlappedArms then u14.anims.SlappedArms:Stop() end
                 end
-
-                if u14.slappedTrove then
-                    u14.slappedTrove:Clean()
-                end
-
-                if u14.downThread then
-                    task.cancel(u14.downThread)
-                end
-
-                if u14.Character:FindFirstChild("HumanoidRootPart") then
-                    local hrp = u14.Character.HumanoidRootPart
+                if u14.slappedTrove then u14.slappedTrove:Clean() end
+                if u14.downThread then task.cancel(u14.downThread) end
+                local hrp = u14.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
                     hrp.AssemblyLinearVelocity = Vector3.zero
                     if hrp:FindFirstChild("PhysicsAtt") then
                         local att = hrp.PhysicsAtt
@@ -113,21 +103,18 @@ local function enableAntiSlap()
                         end
                     end
                 end
-
                 if LightsaberRemotes:FindFirstChild("GetUp") then
                     LightsaberRemotes.GetUp:FireServer()
                 end
             end)
-
             return
         end
-
         return originalSlapped(u14, p15, p16, p17)
     end
 end
 
 local function disableAntiSlap()
-    SlappedModule["Slapped"] = originalSlapped
+    SlappedModule.Slapped = originalSlapped
 end
 
 createButton("AntiSlap", 0.3, function(active)
@@ -139,10 +126,8 @@ createButton("AntiSlap", 0.3, function(active)
 end)
 
 -- AntiBounce
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local bounceFunction = require(ReplicatedStorage.LightsaberModules.SharedBehavior.Bounce)
 local PrimaryAction = require(ReplicatedStorage.LightsaberModules.SharedBehavior.PrimaryAction)
-
 local oldBounceHook
 local bounceHooked = false
 
@@ -155,21 +140,12 @@ local function enableAntiBounce()
         u9.airCombo = nil
         u9.comboIndex = 0
         u9.comboTimestamps = {}
-
         if u9.swingTrove then u9.swingTrove:Clean() end
         if u9.hitTrove then u9.hitTrove:Clean() end
         if u9.idleTrove then u9.idleTrove:Clean() end
-        if u9.lastSwingAnim then
-            pcall(function()
-                u9.lastSwingAnim:Stop()
-                u9.lastSwingAnim:Destroy()
-            end)
-        end
+        if u9.lastSwingAnim then pcall(function() u9.lastSwingAnim:Stop() u9.lastSwingAnim:Destroy() end) end
         u9.lastSwingAnim = nil
-
-        if u9.mouseDown or true then 
-            PrimaryAction.Process(u9)
-        end
+        if u9.mouseDown or true then PrimaryAction.Process(u9) end
     end)
     bounceHooked = true
 end
@@ -182,77 +158,74 @@ createButton("AntiBounce", 0.5, function(active)
     end
 end)
 
--- Nuevo PerfectBlock
+-- PerfectBlock 
 local perfectBlockConnection
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local UpdateBlockDirection = ReplicatedStorage:WaitForChild("LightsaberRemotes"):WaitForChild("UpdateBlockDirection")
-
-local sendCooldown = 0.05
-local lastSend = 0
+local blockRange = 15
 
 local animations = {
-    {id = 12625853257, directions = {8, 7, 6}},  -- ForwardLeft
-    {id = 12625843823, directions = {8, 9, 10}}, -- Left
-    {id = 12625846167, directions = {11, 10}},   -- BackLeft
-    {id = 12625841878, directions = {6, 5, 4}},  -- OverHead
-    {id = 12625848489, directions = {3, 2, 4}},  -- ForwardRight
-    {id = 12625839385, directions = {1, 2, 13}}, -- Right
-    {id = 12625851115, directions = {12, 13}}    -- BackRight
+    [12625853257] = {8, 7, 6},   -- ForwardLeft
+    [12625843823] = {8, 9, 10},  -- Left
+    [12625846167] = {11, 10},    -- BackLeft
+    [12625841878] = {6, 5, 4},   -- OverHead
+    [12625848489] = {3, 2, 4},   -- ForwardRight
+    [12625839385] = {1, 2, 13},  -- Right
+    [12625851115] = {12, 13}     -- BackRight
 }
 
-local function findClosestEnemy()
-    local closestChar, shortest = nil, math.huge
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        return nil
-    end
-    local myPosition = LocalPlayer.Character.HumanoidRootPart.Position
+local function getEnemiesInRange()
+    local enemies = {}
+    local myChar = LocalPlayer.Character
+    if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return enemies end
+    local myPos = myChar.HumanoidRootPart.Position
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local root = player.Character.HumanoidRootPart
-            local dist = (myPosition - root.Position).Magnitude
-            if dist < shortest then
-                shortest = dist
-                closestChar = player
+            local dist = (player.Character.HumanoidRootPart.Position - myPos).Magnitude
+            if dist <= blockRange then
+                table.insert(enemies, player.Character)
             end
         end
     end
-    return closestChar
+    return enemies
 end
 
-local function detectAnimation(player)
-    local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-    if not humanoid then return nil end
-
-    for _, animation in ipairs(humanoid:GetPlayingAnimationTracks()) do
-        for _, anim in ipairs(animations) do
-            if animation.AnimationId == "rbxassetid://" .. anim.id then
-                return anim.directions
+local function getDirectionsFromAnimations(humanoid)
+    local directionsSet = {}
+    for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+        if track.IsPlaying then
+            local animIdStr = track.Animation.AnimationId
+            local animId = tonumber(animIdStr:match("%d+"))
+            if animations[animId] then
+                for _, dir in ipairs(animations[animId]) do
+                    directionsSet[dir] = true
+                end
             end
         end
     end
-    return nil
+    local directions = {}
+    for dir in pairs(directionsSet) do
+        table.insert(directions, dir)
+    end
+    return directions
 end
 
 createButton("PerfectBlock", 0.7, function(active)
     if active then
-        perfectBlockConnection = RunService.RenderStepped:Connect(function()
-            if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                return
-            end
+        perfectBlockConnection = RunService.Heartbeat:Connect(function()
+            local enemies = getEnemiesInRange()
+            local myChar = LocalPlayer.Character
+            if not myChar then return end
 
-            if tick() - lastSend < sendCooldown then return end
-            lastSend = tick()
-
-            local enemy = findClosestEnemy()
-            if not enemy then return end
-
-            local directions = detectAnimation(enemy)
-            if not directions then return end
-
-            for _, dir in ipairs(directions) do
-                UpdateBlockDirection:FireServer(dir)
+            for _, enemyChar in ipairs(enemies) do
+                local humanoid = enemyChar:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    local directions = getDirectionsFromAnimations(humanoid)
+                    if #directions > 0 then
+                        for _, dir in ipairs(directions) do
+                            UpdateBlockDirection:FireServer(dir)
+                        end
+                        task.wait(0.005)
+                    end
+                end
             end
         end)
     else
