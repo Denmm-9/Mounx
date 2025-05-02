@@ -1,3 +1,4 @@
+-- Servicios
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
@@ -6,6 +7,7 @@ local LocalPlayer = Players.LocalPlayer
 local LightsaberRemotes = ReplicatedStorage:WaitForChild("LightsaberRemotes")
 local UpdateBlockDirection = LightsaberRemotes:WaitForChild("UpdateBlockDirection")
 
+-- GUI
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
@@ -85,7 +87,6 @@ local originalSlapped = SlappedModule.Slapped
 local function enableAntiSlap()
     SlappedModule.Slapped = function(u14, p15, p16, p17)
         if u14 and u14.Character and u14.Character == LocalPlayer.Character then
-            print("[HOOKED]")
             task.spawn(function()
                 if u14.anims then
                     if u14.anims.SlappedLegs then u14.anims.SlappedLegs:Stop() end
@@ -158,18 +159,35 @@ createButton("AntiBounce", 0.5, function(active)
     end
 end)
 
--- PerfectBlock 
+-- PerfectBlock
 local perfectBlockConnection
 local blockRange = 15
 
 local animations = {
-    [12625853257] = {8, 7, 6},   -- ForwardLeft
-    [12625843823] = {8, 9, 10},  -- Left
-    [12625846167] = {11, 10},    -- BackLeft
-    [12625841878] = {6, 5, 4},   -- OverHead
-    [12625848489] = {3, 2, 4},   -- ForwardRight
-    [12625839385] = {1, 2, 13},  -- Right
-    [12625851115] = {12, 13}     -- BackRight
+    [12625853257] = {8, 7, 6}, [12718500875] = {8, 7, 6}, [13569308951] = {8, 7, 6},
+    [12734283312] = {8, 7, 6}, [13453385141] = {8, 7, 6}, [14167502905] = {8, 7, 6},
+    [15563346027] = {8, 7, 6}, [17372038496] = {8, 7, 6}, [13306517941] = {8, 7, 6},
+    [13781663786] = {8, 7, 6}, [12625843823] = {8, 9, 10}, [12718483984] = {8, 9, 10},
+    [13568360345] = {8, 9, 10}, [12734279804] = {8, 9, 10}, [13453387454] = {8, 9, 10},
+    [14167592684] = {8, 9, 10}, [15563342470] = {8, 9, 10}, [17372037456] = {8, 9, 10},
+    [13304777249] = {8, 9, 10}, [13781621647] = {8, 9, 10}, [12625846167] = {11, 10},
+    [12718486016] = {11, 10}, [13568907848] = {11, 10}, [12734282359] = {11, 10},
+    [13453382299] = {11, 10}, [14167590501] = {11, 10}, [15564066873] = {11, 10},
+    [17372036678] = {11, 10}, [13304786458] = {11, 10}, [13781667793] = {11, 10},
+    [12625841878] = {6, 5, 4}, [12718501806] = {6, 5, 4}, [13569466383] = {6, 5, 4},
+    [12734284724] = {6, 5, 4}, [13453390619] = {6, 5, 4}, [14167591876] = {6, 5, 4},
+    [15563343960] = {6, 5, 4}, [17372039079] = {6, 5, 4}, [13306520673] = {6, 5, 4},
+    [13783497920] = {6, 5, 4}, [12625848489] = {3, 2, 4}, [12718504431] = {3, 2, 4},
+    [13565725049] = {3, 2, 4}, [12734288411] = {3, 2, 4}, [13453386109] = {3, 2, 4},
+    [14167584256] = {3, 2, 4}, [15563344914] = {3, 2, 4}, [17566657634] = {3, 2, 4},
+    [13304781510] = {3, 2, 4}, [13783395464] = {3, 2, 4}, [12625839385] = {1, 2, 13},
+    [12718502938] = {1, 2, 13}, [13564880014] = {1, 2, 13}, [12734285787] = {1, 2, 13},
+    [13453391958] = {1, 2, 13}, [14167593691] = {1, 2, 13}, [15563343338] = {1, 2, 13},
+    [17372041039] = {1, 2, 13}, [13304774028] = {1, 2, 13}, [13783202348] = {1, 2, 13},
+    [12625851115] = {12, 13}, [12718503706] = {12, 13}, [13566518265] = {12, 13},
+    [12734286808] = {12, 13}, [13453383921] = {12, 13}, [14167585544] = {12, 13},
+    [15563346564] = {12, 13}, [17566667400] = {12, 13}, [13304788013] = {12, 13},
+    [13783293417] = {12, 13},
 }
 
 local function getEnemiesInRange()
