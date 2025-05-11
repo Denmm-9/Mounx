@@ -25,7 +25,7 @@ MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0.5
 MainFrame.Position = UDim2.new(0.8, 0, 0.5, -100)
-MainFrame.Size = UDim2.new(0, 140, 0, 160)
+MainFrame.Size = UDim2.new(0, 140, 0, 50)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
@@ -56,7 +56,7 @@ local function createButton(name, position, onClickFunction)
 end
 
 local getgev = false
-createButton("KillAura", 0.1, function(enabled)
+createButton("KillAura", 0.2, function(enabled)
     getgev = enabled
 end)
 
