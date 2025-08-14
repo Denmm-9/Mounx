@@ -56,12 +56,22 @@ local expandHitboxesConnection
 local function expandAllPlayerHitboxes()
     for _, player in ipairs(Players:GetPlayers()) do
         pcall(function()
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local hitbox = player.Character.HumanoidRootPart
-                hitbox.Size = Vector3.new(11, 11, 11)
-                hitbox.CanCollide = false
-                hitbox.Transparency = 0.9
-                hitbox.Color = Color3.fromRGB(255, 255, 255)
+            if player ~= LocalPlayer and player.Character then
+                local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    hrp.Shape = Enum.PartType.Ball
+                    hrp.Size = Vector3.new(8, 8, 8)
+                    hrp.CanCollide = false
+                    hrp.CanTouch = false
+                    hrp.Transparency = 0.8
+                    hrp.Color = Color3.fromRGB(255, 255, 255)
+                end
+-- Collide Part NEW         
+                local collisionPart = player.Character:FindFirstChild("CollisionPart")
+                if collisionPart then
+                    collisionPart.CanCollide = false
+                    collisionPart.CanTouch = false
+                end
             end
         end)
     end
