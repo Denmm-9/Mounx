@@ -59,11 +59,10 @@ local function expandAllPlayerHitboxes()
             if player ~= LocalPlayer and player.Character then
                 local hrp = player.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
-                    hrp.Shape = Enum.PartType.Ball
-                    hrp.Size = Vector3.new(8, 8, 8)
+                    hrp.Size = Vector3.new(11, 11, 11)
                     hrp.CanCollide = false
                     hrp.CanTouch = false
-                    hrp.Transparency = 0.8
+                    hrp.Transparency = 0.9
                     hrp.Color = Color3.fromRGB(255, 255, 255)
                 end
 -- Collide Part NEW         
