@@ -75,7 +75,7 @@ local function expandAllPlayerHitboxes()
     end
 end
 
-createButton("Expand Hitboxes", 0.002, function(active)
+createButton("Expand Hitboxes", 00.02, function(active)
     if active then
         expandHitboxesConnection = RunService.Heartbeat:Connect(function()
             expandAllPlayerHitboxes()
