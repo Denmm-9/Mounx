@@ -87,32 +87,49 @@ createButton("Expand Hitboxes", 00.02, function(active)
         end
     end
 end)
--- AntiSlap
-local SlappedModule = require(ReplicatedStorage.LightsaberModules.SharedBehavior.Slapped)
-local originalSlapped = SlappedModule.Slapped
 
+-- AntiSlap 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local SlappedModule = require(ReplicatedStorage:WaitForChild("LightsaberModules"):WaitForChild("SharedBehavior"):WaitForChild("Slapped"))
+local originalSlapped = SlappedModule.Slapped
 local function enableAntiSlap()
     SlappedModule.Slapped = function(u14, p15, p16, p17)
+
         if u14 and u14.Character and u14.Character == LocalPlayer.Character then
             task.spawn(function()
+
                 if u14.anims then
                     if u14.anims.SlappedLegs then u14.anims.SlappedLegs:Stop() end
                     if u14.anims.SlappedArms then u14.anims.SlappedArms:Stop() end
                 end
-                if u14.slappedTrove then u14.slappedTrove:Clean() end
-                if u14.downThread then task.cancel(u14.downThread) end
+
+                if u14.downThread then
+                    task.cancel(u14.downThread)
+                    u14.downThread = nil
+                end
+
+                if u14.slappedTrove then
+                    u14.slappedTrove:Clean()
+                end
+
                 local hrp = u14.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    hrp.AssemblyLinearVelocity = Vector3.zero
-                    if hrp:FindFirstChild("PhysicsAtt") then
-                        local att = hrp.PhysicsAtt
-                        if att:FindFirstChild("SlapVelocity") then
-                            att.SlapVelocity.Enabled = false
-                        end
+                if hrp and hrp:FindFirstChild("PhysicsAtt") then
+                    local physicsAtt = hrp.PhysicsAtt
+                    local slapVel = physicsAtt:FindFirstChild("SlapVelocity")
+                    if slapVel then
+                        slapVel.VectorVelocity = (p15 + Vector3.new(0, p16, 0)).Unit * p17
+                        slapVel.Enabled = true
+                        task.delay(0.1, function()
+                            slapVel.Enabled = false
+                            hrp.AssemblyLinearVelocity = slapVel.VectorVelocity
+                        end)
                     end
                 end
-                if LightsaberRemotes:FindFirstChild("GetUp") then
-                    LightsaberRemotes.GetUp:FireServer()
+                local remotes = ReplicatedStorage:WaitForChild("LightsaberRemotes")
+                if remotes:FindFirstChild("GetUp") then
+                    remotes.GetUp:FireServer()
                 end
             end)
             return
@@ -124,7 +141,6 @@ end
 local function disableAntiSlap()
     SlappedModule.Slapped = originalSlapped
 end
-
 createButton("AntiSlap", 0.18, function(active)
     if active then
         enableAntiSlap()
