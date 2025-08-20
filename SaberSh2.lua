@@ -47,6 +47,7 @@ local function createButton(name, position, onClickFunction)
         button.BackgroundColor3 = active and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(45, 45, 45)
         pcall(onClickFunction, active)
     end)
+    return button
 end
 
 -- Expand Hitboxes
@@ -64,7 +65,7 @@ local function expandAllPlayerHitboxes()
                     hrp.Transparency = 0.9
                     hrp.Color = Color3.fromRGB(255, 255, 255)
                 end
--- Collide Part NEW         
+                -- Collide Part NEW         
                 local collisionPart = player.Character:FindFirstChild("CollisionPart")
                 if collisionPart then
                     collisionPart.CanCollide = false
@@ -187,7 +188,7 @@ local currentAnim = nil
 local antiFeintEnabled = false
 local feintConnection = nil
 local feintJustTriggered = false
-local feintWindow = 0.15 -- ventana de bloqueo tras un feint
+local feintWindow = 0.15 
 
 local anticipacion = 0.007
 local margen = 0.010
@@ -201,7 +202,7 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
 	if not checkcaller() and method == "FireServer" then
 		if self == extinguishRemote then
 			if feintJustTriggered then
-				return nil -- 🔥 Bloquea el evento
+				return nil 
 			end
 		end
 	end
@@ -258,7 +259,6 @@ function enableAntiFeint()
 				VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
 			end)
 
-			-- Desactivar la ventana de bloqueo después de un tiempo
 			task.delay(feintWindow, function()
 				feintJustTriggered = false
 			end)
@@ -276,13 +276,18 @@ function disableAntiFeint()
 	end
 end
 
-createButton("AutoFeint", 0.34, function(active)
+local autoFeintBtn
+local autoFeintManual = false 
+
+autoFeintBtn = createButton("AutoFeint", 0.34, function(active)
+	autoFeintManual = active
 	if active then
 		enableAntiFeint()
 	else
 		disableAntiFeint()
 	end
 end)
+
 
 -- PerfectBlock
 local chanceValue = 100 
@@ -499,3 +504,88 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
+-- PerfectBlock R
+local perfectBlockActive = false
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+
+	if input.KeyCode == Enum.KeyCode.R then
+		local btn = MainFrame:FindFirstChild("PerfectBlock")
+		if btn then
+			perfectBlockActive = not perfectBlockActive
+			btn.BackgroundColor3 = perfectBlockActive and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(45, 45, 45)
+
+			if perfectBlockActive then
+
+				local blockCooldownFrames = 3
+				local framesSinceLastBlock = blockCooldownFrames
+
+				perfectBlockConnection = RunService.Heartbeat:Connect(function()
+					framesSinceLastBlock = framesSinceLastBlock + 1
+					local myChar = LocalPlayer.Character
+					if not myChar then return end
+
+					if framesSinceLastBlock >= blockCooldownFrames and shouldBlock() then
+						local enemies = getEnemiesInRange()
+						for _, enemyChar in ipairs(enemies) do
+							local humanoid = enemyChar:FindFirstChildOfClass("Humanoid")
+							if humanoid then
+								local directions = getDirectionsFromAnimations(humanoid)
+								if #directions > 0 then
+									for _, dir in ipairs(directions) do
+										UpdateBlockDirection:FireServer(dir)
+									end
+									framesSinceLastBlock = 0
+									break
+								end
+							end
+						end
+					end
+				end)
+			else
+
+				if perfectBlockConnection then
+					perfectBlockConnection:Disconnect()
+					perfectBlockConnection = nil
+				end
+			end
+		end
+	end
+end)
+
+
+-- AutoFeint ShiftLock
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+
+	if input.KeyCode == Enum.KeyCode.LeftShift then
+		enableAntiFeint()
+		if autoFeintBtn and not autoFeintManual then
+			autoFeintBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+		end
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.LeftShift then
+		if not autoFeintManual then
+			disableAntiFeint()
+			if autoFeintBtn then
+				autoFeintBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+			end
+		end
+	end
+end)
+
+-- Menu INSERT
+local menuVisible = true
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+
+	if input.KeyCode == Enum.KeyCode.Insert then
+		menuVisible = not menuVisible
+		MainFrame.Visible = menuVisible
+	end
+end)
