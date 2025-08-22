@@ -6,6 +6,9 @@ local LocalPlayer = Players.LocalPlayer
 
 local LightsaberRemotes = ReplicatedStorage:WaitForChild("LightsaberRemotes")
 local UpdateBlockDirection = LightsaberRemotes:WaitForChild("UpdateBlockDirection")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local PrimaryAction = require(ReplicatedStorage.LightsaberModules.SharedBehavior.PrimaryAction)
+local ServerState = require(ReplicatedStorage.LightsaberModules.ServerState)
 
 -- GUI
 local ScreenGui = Instance.new("ScreenGui")
@@ -453,92 +456,6 @@ createButton("PerfectBlock", 0.50, function(active)
     end
 end)
 
--- Slider de probabilidad
-local SliderFrame = Instance.new("Frame")
-SliderFrame.Name = "PBSliderFrame"
-SliderFrame.Parent = MainFrame
-SliderFrame.Position = UDim2.new(0.05, 0, 0.70, 0)
-SliderFrame.Size = UDim2.new(0.9, 0, 0, 40)
-SliderFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-SliderFrame.BackgroundTransparency = 0.2
-Instance.new("UICorner", SliderFrame)
-
-local TextLabel = Instance.new("TextLabel")
-TextLabel.Parent = SliderFrame
-TextLabel.Size = UDim2.new(1, 0, 0.5, 0)
-TextLabel.Position = UDim2.new(0, 0, 0, 0)
-TextLabel.BackgroundTransparency = 1
-TextLabel.TextColor3 = Color3.new(1, 1, 1)
-TextLabel.Font = Enum.Font.SourceSansBold
-TextLabel.TextSize = 14
-TextLabel.Text = "PB Chance: 100%"
-
-local SliderBackground = Instance.new("Frame")
-SliderBackground.Parent = SliderFrame
-SliderBackground.Size = UDim2.new(1, 0, 0.5, 0)
-SliderBackground.Position = UDim2.new(0, 0, 0.5, 0)
-SliderBackground.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-Instance.new("UICorner", SliderBackground)
-
-local SliderFill = Instance.new("Frame")
-SliderFill.Parent = SliderBackground
-SliderFill.Size = UDim2.new(1, 0, 1, 0)
-SliderFill.Position = UDim2.new(0, 0, 0, 0)
-SliderFill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-SliderFill.AnchorPoint = Vector2.new(0, 0)
-Instance.new("UICorner", SliderFill)
-
-local Input = Instance.new("TextButton")
-Input.Parent = SliderBackground
-Input.Size = UDim2.new(1, 0, 1, 0)
-Input.BackgroundTransparency = 1
-Input.Text = ""
-
-local UserInputService = game:GetService("UserInputService")
-local dragging = false
-
-local allowedValues = {20, 50, 100}
-
-local function closestAllowedValue(value)
-    local closest = allowedValues[1]
-    local smallestDiff = math.abs(value - closest)
-    for _, v in ipairs(allowedValues) do
-        local diff = math.abs(value - v)
-        if diff < smallestDiff then
-            closest = v
-            smallestDiff = diff
-        end
-    end
-    return closest
-end
-
-local function updateSlider(x)
-    local relX = math.clamp((x - SliderBackground.AbsolutePosition.X) / SliderBackground.AbsoluteSize.X, 0, 1)
-    local rawValue = relX * 100
-    local stepped = closestAllowedValue(rawValue)
-    chanceValue = stepped
-    TextLabel.Text = "PB Chance: " .. chanceValue .. "%"
-    SliderFill.Size = UDim2.new(chanceValue / 100, 0, 1, 0)
-end
-
-
-Input.MouseButton1Down:Connect(function()
-    dragging = true
-    updateSlider(UserInputService:GetMouseLocation().X)
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        updateSlider(UserInputService:GetMouseLocation().X)
-    end
-end)
-
 -- PerfectBlock R
 local perfectBlockActive = false
 
@@ -589,6 +506,30 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 	end
 end)
 
+-- Hook InfCombo
+local oldGet = ServerState.Get
+local comboHooked = false
+
+local function enableMaxCombo()
+    if comboHooked then return end
+    ServerState.Get = function(character, key)
+        if key == "MaxComboCount" then
+            return 8
+        else
+            return oldGet(character, key)
+        end
+    end
+    comboHooked = true
+end
+
+createButton("Max Combo", 0.67, function(active)
+    if active then
+        enableMaxCombo()
+    else
+        ServerState.Get = oldGet
+        comboHooked = false
+    end
+end)
 
 -- AutoFeint ShiftLock
 UserInputService.InputBegan:Connect(function(input, gpe)
