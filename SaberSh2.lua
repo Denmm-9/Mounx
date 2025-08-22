@@ -6,7 +6,6 @@ local LocalPlayer = Players.LocalPlayer
 
 local LightsaberRemotes = ReplicatedStorage:WaitForChild("LightsaberRemotes")
 local UpdateBlockDirection = LightsaberRemotes:WaitForChild("UpdateBlockDirection")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PrimaryAction = require(ReplicatedStorage.LightsaberModules.SharedBehavior.PrimaryAction)
 local ServerState = require(ReplicatedStorage.LightsaberModules.ServerState)
 
