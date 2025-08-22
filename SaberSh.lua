@@ -6,6 +6,8 @@ local LocalPlayer = Players.LocalPlayer
 
 local LightsaberRemotes = ReplicatedStorage:WaitForChild("LightsaberRemotes")
 local UpdateBlockDirection = LightsaberRemotes:WaitForChild("UpdateBlockDirection")
+local PrimaryAction = require(ReplicatedStorage.LightsaberModules.SharedBehavior.PrimaryAction)
+local ServerState = require(ReplicatedStorage.LightsaberModules.ServerState)
 
 -- GUI
 local ScreenGui = Instance.new("ScreenGui")
@@ -49,45 +51,80 @@ local function createButton(name, position, onClickFunction)
         pcall(onClickFunction, active)
     end)
 end
-
 -- Expand Hitboxes
-local expandHitboxesConnection
-
+local originalStates = {}
 local function expandAllPlayerHitboxes()
     for _, player in ipairs(Players:GetPlayers()) do
-        pcall(function()
-            if player ~= LocalPlayer and player.Character then
+        if player ~= LocalPlayer and player.Character then
+            pcall(function()
                 local hrp = player.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
-                    hrp.Size = Vector3.new(11, 11, 11)
+                    if not originalStates[player] then originalStates[player] = {} end
+                    if not originalStates[player].hrp then
+                        originalStates[player].hrp = {
+                            Size = hrp.Size,
+                            CanCollide = hrp.CanCollide,
+                            CanTouch = hrp.CanTouch,
+                            Transparency = hrp.Transparency,
+                            Color = hrp.Color
+                        }
+                    end
+                    hrp.Size = Vector3.new(10,10,10)
                     hrp.CanCollide = false
                     hrp.CanTouch = false
                     hrp.Transparency = 0.9
-                    hrp.Color = Color3.fromRGB(255, 255, 255)
+                    hrp.Color = Color3.fromRGB(255,255,255)
                 end
--- Collide Part NEW         
+
                 local collisionPart = player.Character:FindFirstChild("CollisionPart")
                 if collisionPart then
+                    if not originalStates[player].collisionPart then
+                        originalStates[player].collisionPart = {
+                            CanCollide = collisionPart.CanCollide,
+                            CanTouch = collisionPart.CanTouch
+                        }
+                    end
                     collisionPart.CanCollide = false
                     collisionPart.CanTouch = false
                 end
-            end
-        end)
+            end)
+        end
     end
+end
+
+local function restoreHitboxes()
+    for player, states in pairs(originalStates) do
+        if player.Character then
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and states.hrp then
+                hrp.Size = states.hrp.Size
+                hrp.CanCollide = states.hrp.CanCollide
+                hrp.CanTouch = states.hrp.CanTouch
+                hrp.Transparency = states.hrp.Transparency
+                hrp.Color = states.hrp.Color
+            end
+            local collisionPart = player.Character:FindFirstChild("CollisionPart")
+            if collisionPart and states.collisionPart then
+                collisionPart.CanCollide = states.collisionPart.CanCollide
+                collisionPart.CanTouch = states.collisionPart.CanTouch
+            end
+        end
+    end
+    originalStates = {}
 end
 
 createButton("Expand Hitboxes", 0.1, function(active)
     if active then
-        expandHitboxesConnection = RunService.Heartbeat:Connect(function()
-            expandAllPlayerHitboxes()
-        end)
+        expandHitboxesConnection = RunService.Heartbeat:Connect(expandAllPlayerHitboxes)
     else
         if expandHitboxesConnection then
             expandHitboxesConnection:Disconnect()
             expandHitboxesConnection = nil
         end
+        restoreHitboxes()
     end
 end)
+
 
 -- AntiSlap
 local SlappedModule = require(ReplicatedStorage.LightsaberModules.SharedBehavior.Slapped)
@@ -135,38 +172,32 @@ createButton("AntiSlap", 0.3, function(active)
     end
 end)
 
--- AntiBounce
-local bounceFunction = require(ReplicatedStorage.LightsaberModules.SharedBehavior.Bounce)
-local PrimaryAction = require(ReplicatedStorage.LightsaberModules.SharedBehavior.PrimaryAction)
-local oldBounceHook
-local bounceHooked = false
+-- Inf Combo
+local oldGet = ServerState.Get
+local comboHooked = false
 
-local function enableAntiBounce()
-    if bounceHooked then return end
-    oldBounceHook = hookfunction(bounceFunction, function(u9, u10)
-        u9.attacking = false
-        u9.bouncing = false
-        u9.recovering = false
-        u9.airCombo = nil
-        u9.comboIndex = 0
-        u9.comboTimestamps = {}
-        if u9.swingTrove then u9.swingTrove:Clean() end
-        if u9.hitTrove then u9.hitTrove:Clean() end
-        if u9.idleTrove then u9.idleTrove:Clean() end
-        if u9.lastSwingAnim then pcall(function() u9.lastSwingAnim:Stop() u9.lastSwingAnim:Destroy() end) end
-        u9.lastSwingAnim = nil
-        if u9.mouseDown or true then PrimaryAction.Process(u9) end
-    end)
-    bounceHooked = true
+local function enableMaxCombo()
+    if comboHooked then return end
+    ServerState.Get = function(character, key)
+        if key == "MaxComboCount" then
+            return 8
+        else
+            return oldGet(character, key)
+        end
+    end
+    comboHooked = true
+    print("[MaxCombo] Activado")
 end
 
-createButton("AntiBounce", 0.5, function(active)
+createButton("Max Combo", 0.5, function(active)
     if active then
-        enableAntiBounce()
+        enableMaxCombo()
     else
-        warn("[AntiBounce] No se puede desactivar tras activarlo.")
+        ServerState.Get = oldGet
+        comboHooked = false
     end
 end)
+
 
 -- PerfectBlock
 local perfectBlockConnection
