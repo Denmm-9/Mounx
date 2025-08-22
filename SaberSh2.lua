@@ -49,43 +49,78 @@ local function createButton(name, position, onClickFunction)
     end)
     return button
 end
-
 -- Expand Hitboxes
-local expandHitboxesConnection
+local originalStates = {}
 
 local function expandAllPlayerHitboxes()
     for _, player in ipairs(Players:GetPlayers()) do
-        pcall(function()
-            if player ~= LocalPlayer and player.Character then
+        if player ~= LocalPlayer and player.Character then
+            pcall(function()
                 local hrp = player.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
-                    hrp.Size = Vector3.new(10, 10, 10)
+                    if not originalStates[player] then originalStates[player] = {} end
+                    if not originalStates[player].hrp then
+                        originalStates[player].hrp = {
+                            Size = hrp.Size,
+                            CanCollide = hrp.CanCollide,
+                            CanTouch = hrp.CanTouch,
+                            Transparency = hrp.Transparency,
+                            Color = hrp.Color
+                        }
+                    end
+                    hrp.Size = Vector3.new(10,10,10)
                     hrp.CanCollide = false
                     hrp.CanTouch = false
                     hrp.Transparency = 0.9
-                    hrp.Color = Color3.fromRGB(255, 255, 255)
+                    hrp.Color = Color3.fromRGB(255,255,255)
                 end
-                -- Collide Part NEW         
+
                 local collisionPart = player.Character:FindFirstChild("CollisionPart")
                 if collisionPart then
+                    if not originalStates[player].collisionPart then
+                        originalStates[player].collisionPart = {
+                            CanCollide = collisionPart.CanCollide,
+                            CanTouch = collisionPart.CanTouch
+                        }
+                    end
                     collisionPart.CanCollide = false
                     collisionPart.CanTouch = false
                 end
-            end
-        end)
+            end)
+        end
     end
+end
+
+local function restoreHitboxes()
+    for player, states in pairs(originalStates) do
+        if player.Character then
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and states.hrp then
+                hrp.Size = states.hrp.Size
+                hrp.CanCollide = states.hrp.CanCollide
+                hrp.CanTouch = states.hrp.CanTouch
+                hrp.Transparency = states.hrp.Transparency
+                hrp.Color = states.hrp.Color
+            end
+            local collisionPart = player.Character:FindFirstChild("CollisionPart")
+            if collisionPart and states.collisionPart then
+                collisionPart.CanCollide = states.collisionPart.CanCollide
+                collisionPart.CanTouch = states.collisionPart.CanTouch
+            end
+        end
+    end
+    originalStates = {}
 end
 
 createButton("Expand Hitboxes", 00.02, function(active)
     if active then
-        expandHitboxesConnection = RunService.Heartbeat:Connect(function()
-            expandAllPlayerHitboxes()
-        end)
+        expandHitboxesConnection = RunService.Heartbeat:Connect(expandAllPlayerHitboxes)
     else
         if expandHitboxesConnection then
             expandHitboxesConnection:Disconnect()
             expandHitboxesConnection = nil
         end
+        restoreHitboxes()
     end
 end)
 
