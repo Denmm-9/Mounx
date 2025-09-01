@@ -6,11 +6,8 @@ local LocalPlayer = Players.LocalPlayer
 -- Combat Remotes
 local PlayerAttack = ReplicatedStorage:WaitForChild("Systems"):WaitForChild("Combat"):WaitForChild("PlayerAttack")
 local PetAttack = ReplicatedStorage:WaitForChild("Systems"):WaitForChild("Combat"):WaitForChild("PetDamage")
-
--- Pet y Mobs
+-- Mobs
 local mobsFolder = workspace:WaitForChild("Mobs")
-local pet = workspace:WaitForChild("Mobs"):WaitForChild("Sea Serpent")
-local petAttackCircle = ReplicatedStorage:WaitForChild("Mobs"):WaitForChild("Sea Serpent"):WaitForChild("Attacks"):WaitForChild("Body Slam"):WaitForChild("Circle")
 
 -- GUI
 local ScreenGui = Instance.new("ScreenGui")
