@@ -6,6 +6,7 @@ local LocalPlayer = Players.LocalPlayer
 -- Combat Remotes
 local PlayerAttack = ReplicatedStorage:WaitForChild("Systems"):WaitForChild("Combat"):WaitForChild("PlayerAttack")
 local PetAttack = ReplicatedStorage:WaitForChild("Systems"):WaitForChild("Combat"):WaitForChild("PetDamage")
+
 -- Mobs
 local mobsFolder = workspace:WaitForChild("Mobs")
 
