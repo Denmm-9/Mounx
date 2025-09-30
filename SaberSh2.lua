@@ -70,7 +70,7 @@ local function expandAllPlayerHitboxes()
                             Color = hrp.Color
                         }
                     end
-                    hrp.Size = Vector3.new(6,6,6)
+                    hrp.Size = Vector3.new(8,8,8)
                     hrp.CanCollide = false
                     hrp.CanTouch = false
                     hrp.Transparency = 0.9
