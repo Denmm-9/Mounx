@@ -513,7 +513,7 @@ local function enableMaxCombo()
     if comboHooked then return end
     ServerState.Get = function(character, key)
         if key == "MaxComboCount" then
-            return 8
+            return 20
         else
             return oldGet(character, key)
         end
