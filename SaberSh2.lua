@@ -64,12 +64,14 @@ local function expandAllPlayerHitboxes()
                     if not originalStates[player].hrp then
                         originalStates[player].hrp = {
                             Size = hrp.Size,
+                            CanCollide = hrp.CanCollide,
+                            CanTouch = hrp.CanTouch,
                             Transparency = hrp.Transparency,
                             Color = hrp.Color
                         }
                     end
                     hrp.Size = Vector3.new(5,5,5)
-					hrp.CanCollide = false
+                    hrp.CanCollide = false
                     hrp.CanTouch = false
                     hrp.Transparency = 0.9
                     hrp.Color = Color3.fromRGB(255,255,255)
@@ -79,12 +81,11 @@ local function expandAllPlayerHitboxes()
                 if collisionPart then
                     if not originalStates[player].collisionPart then
                         originalStates[player].collisionPart = {
-							CanCollide = collisionPart.CanCollide,
+                            CanCollide = collisionPart.CanCollide,
                             CanTouch = collisionPart.CanTouch
-
                         }
                     end
-					collisionPart.CanCollide = false
+                    collisionPart.CanCollide = false
                     collisionPart.CanTouch = false
                 end
             end)
