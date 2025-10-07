@@ -3,7 +3,7 @@ if not game:IsLoaded() then
     task.wait(1)
 end
 
-local ListURl = "https://github.com/Denmm-9/Mounx/blob/main/Game_list.lua"
+local ListURl = "https://raw.githubusercontent.com/Denmm-9/Mounx/refs/heads/main/Game_list.lua"
 local games = loadstring(game:HttpGet(ListURl))()
 
 local success, errorMsg = pcall(function()
