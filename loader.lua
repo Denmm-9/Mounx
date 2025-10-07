@@ -73,7 +73,6 @@ for placeId, data in pairs(games) do
         end
 
         if scriptUrl then
-            NotificationLib:Success("Game Found", "Loading " .. gameName .. " (" .. deviceType .. ")", 5)
             loadstring(game:HttpGet(scriptUrl))()
             loadedGame = true
         end
