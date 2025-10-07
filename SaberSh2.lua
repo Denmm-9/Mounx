@@ -58,7 +58,7 @@ local function expandAllPlayerHitboxes()
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             pcall(function()
-                local hrp = player.Character:FindFirstChild("Head")
+                local hrp = player.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
                     if not originalStates[player] then originalStates[player] = {} end
                     if not originalStates[player].hrp then
