@@ -5,21 +5,22 @@ if not game:IsLoaded() then
 end
 
 local UserInputService = game:GetService("UserInputService")
-local HttpService = game:GetService("HttpService")
 
--- URL del game list (usa raw)
 local LIST_URL = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/Game_list.lua"
 
--- URLs universales (modifícalas con tus scripts universales)
+-- Soporte para múltiples scripts por dispositivo
 local UNIVERSAL = {
-    pc = "https://raw.githubusercontent.com/Denmm-9/Universal/main/NonUniversal.lua",
-        "https://raw.githubusercontent.com/Denmm-9/Universal/main/SilentAimV2.lua",
-    mobile = "https://raw.githubusercontent.com/Denmm-9/Universal/main/MobileUniversal.lua",
+    pc = {
+        "https://raw.githubusercontent.com/Denmm-9/Universal/main/NonUniversal.lua",
+        "https://raw.githubusercontent.com/Denmm-9/Universal/main/SilentAimV2.lua"
+    },
+    mobile = {
+        "https://raw.githubusercontent.com/Denmm-9/Universal/main/MobileUniversal.lua"
+    }
 }
 
--- Detectar dispositivo (bastante fiable para PC vs Mobile)
+-- Detección del dispositivo
 local function detectDevice()
-    -- TouchEnabled sin teclado físico => mobile
     if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
         return "mobile"
     end
@@ -29,74 +30,38 @@ end
 local device = detectDevice()
 print("[Loader] Detected device:", device)
 
--- Cargar tabla de juegos remota de forma segura
+-- Función para obtener tabla de juegos remota
 local function fetchGameList(url)
     local ok, resp = pcall(function() return game:HttpGet(url) end)
-    if not ok then
-        warn("[Loader] HttpGet failed:", resp)
-        return nil
-    end
-
+    if not ok then return nil end
     local ok2, chunk = pcall(function() return loadstring(resp)() end)
-    if not ok2 then
-        warn("[Loader] loadstring failed:", chunk)
-        return nil
-    end
-
-    if type(chunk) ~= "table" then
-        warn("[Loader] Game list did not return a table")
-        return nil
-    end
-
+    if not ok2 or type(chunk) ~= "table" then return nil end
     return chunk
 end
 
 local games = fetchGameList(LIST_URL)
 
--- Decide qué hacer: si games es nil o vacío mostramos prompt universal
-local function isTableEmpty(t)
-    if not t then return true end
-    for _ in pairs(t) do return false end
-    return true
-end
-
+-- Función para ejecutar scripts remotos
 local function loadRemoteScript(url)
-    if not url then
-        warn("[Loader] No url provided to load")
-        return
-    end
     local ok, resp = pcall(function() return game:HttpGet(url) end)
-    if not ok then
-        warn("[Loader] Failed to download script:", resp)
-        return
-    end
+    if not ok then return warn("[Loader] Failed:", resp) end
     local ok2, err = pcall(function() loadstring(resp)() end)
-    if not ok2 then
-        warn("[Loader] Error running script:", err)
-    end
+    if not ok2 then warn("[Loader] Error:", err) end
 end
 
--- Si hay una coincidencia directa con PlaceId, cargarla
+-- Si hay coincidencia de juego
 local function tryLoadFromList(gamesTable)
     if not gamesTable then return false end
     for placeId, data in pairs(gamesTable) do
         if tonumber(placeId) == tonumber(game.PlaceId) then
-            -- si data es tabla -> data.pc / data.mobile
-            if type(data) == "table" then
-                local url = data[device]
-                if url then
-                    print("[Loader] Loading game script for device:", device)
-                    loadRemoteScript(url)
-                    return true
-                else
-                    warn("[Loader] Este juego no tiene script para este dispositivo.")
-                    return false
-                end
-            elseif type(data) == "string" then
-                print("[Loader] Loading single script for this place")
-                loadRemoteScript(data)
-                return true
+            local url = type(data) == "table" and data[device] or data
+            if not url then
+                warn("[Loader] No script for this device.")
+                return false
             end
+            print("[Loader] Loading game script:", url)
+            loadRemoteScript(url)
+            return true
         end
     end
     return false
@@ -104,16 +69,8 @@ end
 
 local loaded = tryLoadFromList(games)
 
--- Si no se cargó (no está en la lista o la lista está vacía), mostrar GUI universal
+-- Si no hay script en lista, muestra GUI universal
 if not loaded then
-    -- Si la lista está vacía o no existe mostramos prompt
-    if isTableEmpty(games) then
-        print("[Loader] Game list empty or unavailable. Showing universal prompt.")
-    else
-        print("[Loader] PlaceId not in list. Showing universal prompt.")
-    end
-
-    -- Simple GUI
     local player = game:GetService("Players").LocalPlayer
     local parent = (game:GetService("RunService"):IsStudio() and player.PlayerGui) or game.CoreGui
 
@@ -136,21 +93,27 @@ if not loaded then
     title.TextColor3 = Color3.fromRGB(255,255,255)
     title.TextScaled = true
 
-    local pcBtn = Instance.new("TextButton", frame)
-    pcBtn.Size = UDim2.new(0.44, 0, 0, 50)
-    pcBtn.Position = UDim2.new(0.05, 0, 0.45, 0)
-    pcBtn.Text = "PC"
-    pcBtn.TextScaled = true
-    pcBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    pcBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    local function createButton(text, pos, deviceType)
+        local btn = Instance.new("TextButton", frame)
+        btn.Size = UDim2.new(0.44, 0, 0, 50)
+        btn.Position = pos
+        btn.Text = text
+        btn.TextScaled = true
+        btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+        btn.TextColor3 = Color3.fromRGB(255,255,255)
+        btn.MouseButton1Click:Connect(function()
+            screenGui:Destroy()
+            local urls = UNIVERSAL[deviceType]
+            if not urls then return warn("[Loader] No URLs for:", deviceType) end
+            print("[Loader] Loading universal scripts for:", deviceType)
+            for _, link in ipairs(urls) do
+                loadRemoteScript(link)
+            end
+        end)
+    end
 
-    local mobBtn = Instance.new("TextButton", frame)
-    mobBtn.Size = UDim2.new(0.44, 0, 0, 50)
-    mobBtn.Position = UDim2.new(0.51, 0, 0.45, 0)
-    mobBtn.Text = "Mobile"
-    mobBtn.TextScaled = true
-    mobBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    mobBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    createButton("PC", UDim2.new(0.05, 0, 0.45, 0), "pc")
+    createButton("Mobile", UDim2.new(0.51, 0, 0.45, 0), "mobile")
 
     local hint = Instance.new("TextLabel", frame)
     hint.Size = UDim2.new(1, -20, 0, 28)
@@ -159,18 +122,4 @@ if not loaded then
     hint.Text = "Choose which universal script to load."
     hint.TextColor3 = Color3.fromRGB(200,200,200)
     hint.TextScaled = true
-
-    local function onChoice(selectedDevice)
-        screenGui:Destroy()
-        local url = UNIVERSAL[selectedDevice]
-        if not url then
-            warn("[Loader] No universal script URL configured for:", selectedDevice)
-            return
-        end
-        print("[Loader] Loading universal script for:", selectedDevice)
-        loadRemoteScript(url)
-    end
-
-    pcBtn.MouseButton1Click:Connect(function() onChoice("pc") end)
-    mobBtn.MouseButton1Click:Connect(function() onChoice("mobile") end)
 end
