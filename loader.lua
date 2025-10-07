@@ -2,8 +2,6 @@ if not game:IsLoaded() then
     game.Loaded:Wait()
     task.wait(1)
 end
-
--- 🔔 NotificationLib
 local NotificationLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/AccountBurner/Utility/refs/heads/main/NotificationLib"))()
 
 local UIS = game:GetService("UserInputService")
