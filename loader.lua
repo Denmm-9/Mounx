@@ -2,24 +2,40 @@ if not game:IsLoaded() then
     game.Loaded:Wait()
     task.wait(1)
 end
+
+--// 📦 Dependencias
 local NotificationLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/AccountBurner/Utility/refs/heads/main/NotificationLib"))()
-
 local UIS = game:GetService("UserInputService")
-local Player = game.Players.LocalPlayer
+local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
+
+--// 📱 Detección de dispositivo
 local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
-local deviceType = isMobile and "mobile" or "pc"
+local deviceType = isMobile and "Mobile" or "PC"
 
-NotificationLib:Info("Loader", "Platform detected: " .. deviceType, 3)
+--// 💾 Información del juego
+local gameName = "Unknown Game"
+pcall(function()
+    local info = MarketplaceService:GetProductInfo(game.PlaceId)
+    gameName = info.Name
+end)
 
+--// 🧠 Identificar executor
+local executor = identifyexecutor and identifyexecutor() or "Unknown Executor"
+
+--// 🔔 Mostrar notificación de inicio
+NotificationLib:Info("Loader", string.format("Device: %s\nGame: %s\nExecutor: %s", deviceType, gameName, executor), 6)
+
+--// 📋 Cargar lista de juegos
 local ListURL = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/Game_list.lua"
-
 local success, result = pcall(function()
     return loadstring(game:HttpGet(ListURL))()
 end)
 
 if not success then
-    NotificationLib:Error("Game List Error", tostring(result), 5)
+    NotificationLib:Error("Error", "Game list failed to load", 6)
     return
 end
 
@@ -30,38 +46,32 @@ for placeId, data in pairs(games) do
     if game.PlaceId == placeId then
         local scriptUrl = nil
         if type(data) == "table" then
-            scriptUrl = data[deviceType] or data.pc or data.mobile
+            scriptUrl = data[deviceType:lower()] or data.pc or data.mobile
         elseif type(data) == "string" then
             scriptUrl = data
         end
 
         if scriptUrl then
-            NotificationLib:Info("Game Detected", "Loading script for " .. deviceType, 3)
-            local ok, err = pcall(function()
-                loadstring(game:HttpGet(scriptUrl))()
-            end)
-            if ok then
-                NotificationLib:Success("Loaded", "Script loaded successfully", 3)
-            else
-                NotificationLib:Error("Load Error", tostring(err), 5)
-            end
+            NotificationLib:Success("Game Found", "Loading " .. gameName .. " (" .. deviceType .. ")", 5)
+            loadstring(game:HttpGet(scriptUrl))()
             loadedGame = true
         end
         break
     end
 end
 
+--// 🌍 Si no hay juego en la lista, mostrar selector universal
 if not loadedGame then
-    NotificationLib:Warning("Universal Mode", "No game found in list. Opening universal selector.", 4)
+    NotificationLib:Warning("No Game Match", "Opening universal selector for " .. deviceType, 5)
 
     local universalScripts = {}
-    if deviceType == "pc" then
+    if deviceType == "PC" then
         universalScripts = {
             { Name = "NonUniversal.lua", URL = "https://raw.githubusercontent.com/Denmm-9/Universal/main/NonUniversal.lua" },
             { Name = "SilentAimV2.lua", URL = "https://raw.githubusercontent.com/Denmm-9/Universal/main/SilentAimV2.lua" },
             { Name = "HitboxExpander.lua", URL = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/HitboxExpander.lua" },
         }
-    elseif deviceType == "mobile" then
+    else
         universalScripts = {
             { Name = "MobileUniversal.lua", URL = "https://raw.githubusercontent.com/Denmm-9/Universal/main/MobileUniversal.lua" },
             { Name = "HitboxExpander.lua", URL = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/HitboxExpander.lua" },
@@ -100,17 +110,10 @@ if not loadedGame then
     local Gradient = Instance.new("UIGradient")
     Gradient.Color = ColorSequence.new{
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-        ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 0)),
-        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
-        ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)),
-        ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255)),
     }
     Gradient.Parent = Title
-
-    local UIStrokeTop = Instance.new("UIStroke")
-    UIStrokeTop.Color = Color3.fromRGB(45, 45, 45)
-    UIStrokeTop.Parent = Top
 
     local Bottom = Instance.new("Frame")
     Bottom.Parent = Holder
@@ -118,10 +121,6 @@ if not loadedGame then
     Bottom.Position = UDim2.new(0, 0, 0.88, 0)
     Bottom.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
     Bottom.BorderSizePixel = 0
-
-    local UIStrokeBottom = Instance.new("UIStroke")
-    UIStrokeBottom.Color = Color3.fromRGB(45, 45, 45)
-    UIStrokeBottom.Parent = Bottom
 
     local LastUpdate = Instance.new("TextLabel")
     LastUpdate.Parent = Bottom
@@ -168,10 +167,6 @@ if not loadedGame then
         Template.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
         Template.BorderSizePixel = 0
 
-        local UIStroke = Instance.new("UIStroke")
-        UIStroke.Color = Color3.fromRGB(45, 45, 45)
-        UIStroke.Parent = Template
-
         local Btn = Instance.new("TextButton")
         Btn.Parent = Template
         Btn.Size = UDim2.new(1, 0, 1, 0)
@@ -184,24 +179,16 @@ if not loadedGame then
         Btn.MouseButton1Click:Connect(function()
             SelectedScript = info
             LastUpdate.Text = "Selected: " .. info.Name
-            NotificationLib:Info("Selected", info.Name, 3)
         end)
     end
 
     LoadButton.MouseButton1Click:Connect(function()
         if not SelectedScript then
-            NotificationLib:Warning("Select Script", "Please select one first", 3)
+            NotificationLib:Warning("No Script", "Select a script first", 4)
             return
         end
-        NotificationLib:Info("Loading", SelectedScript.Name, 3)
-        local ok, err = pcall(function()
-            loadstring(game:HttpGet(SelectedScript.URL))()
-        end)
-        if ok then
-            NotificationLib:Success("Loaded", "Script loaded successfully", 3)
-        else
-            NotificationLib:Error("Error", tostring(err), 4)
-        end
+        NotificationLib:Info("Loading", "Executing " .. SelectedScript.Name, 4)
+        loadstring(game:HttpGet(SelectedScript.URL))()
         ScreenGui:Destroy()
     end)
 end
