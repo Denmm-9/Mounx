@@ -44,10 +44,10 @@ end
 
 
 NotificationLib:Info("Device Detected", "Device: " .. deviceType, 4)
-task.delay(0.4, function()
+task.delay(0.2, function()
     NotificationLib:Info("Executor Detected", "Executor: " .. executor, 4)
 end)
-task.delay(0.9, function()
+task.delay(0.6, function()
     if isInList then
         NotificationLib:Success("Game Found", "Game: " .. gameName, 5)
     else
