@@ -51,15 +51,19 @@ end
 --// 🔔 Notificación 1: Device
 NotificationLib:Info("Device Detected", "Device: " .. deviceType, 4)
 
---// 🔔 Notificación 2: Executor
-NotificationLib:Info("Executor Detected", "Executor: " .. executor, 4)
+-- Esperar 0.7 segundos antes de mostrar la siguiente
+task.delay(0.7, function()
+    NotificationLib:Info("Executor Detected", "Executor: " .. executor, 4)
+end)
 
---// 🔔 Notificación 3: Game
-if isInList then
-    NotificationLib:Success("Game Found", "Game: " .. gameName, 5)
-else
-    NotificationLib:Warning("Game Not in List", "Game not in list: " .. gameName, 5)
-end
+-- Otra espera antes de mostrar la del juego
+task.delay(1.4, function()
+    if isInList then
+        NotificationLib:Success("Game Found", "Game: " .. gameName, 5)
+    else
+        NotificationLib:Warning("Game Not in List", "Game not in list: " .. gameName, 5)
+    end
+end)
 
 
 --// 🔁 Ejecutar script si está en la lista
