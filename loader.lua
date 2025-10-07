@@ -16,7 +16,7 @@ local success, result = pcall(function()
 end)
 
 if not success then
-    warn("❌ Error loading Game_list:", result)
+    warn("Error loading Game_list:", result)
     return
 end
 
@@ -42,7 +42,7 @@ for placeId, data in pairs(games) do
 end
 
 if not loadedGame then
-    print("🌍 No game found in Game_list. Showing universal script selector for:", deviceType)
+    print(" No game found in Game_list. Showing universal script selector for:", deviceType)
 
     local universalScripts = {}
     if deviceType == "pc" then
@@ -58,7 +58,6 @@ if not loadedGame then
         }
     end
 
-    -- 🧠 UI tipo homohack
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "UniversalSelector"
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -180,10 +179,10 @@ if not loadedGame then
 
     LoadButton.MouseButton1Click:Connect(function()
         if not SelectedScript then
-            LastUpdate.Text = "❗ Select a script first."
+            LastUpdate.Text = "Select a script first."
             return
         end
-        print("⚡ Loading universal:", SelectedScript.Name)
+        print("Loading universal:", SelectedScript.Name)
         pcall(function()
             loadstring(game:HttpGet(SelectedScript.URL))()
         end)
