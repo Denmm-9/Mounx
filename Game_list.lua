@@ -1,6 +1,6 @@
 local games = {
     [12625784503] = {
-        pc = "https://raw.githubusercontent.com/Denmm-9/Mounx/refs/heads/main/SaberSh2.lua",
+        pc = "https://raw.githubusercontent.com/Denmm-9/Mounx/refs/heads/main/SaberSh2.lua"
         mobile = "https://raw.githubusercontent.com/Denmm-9/Mounx/refs/heads/main/SaberSh.lua"
     },
     [11157166793] = "https://raw.githubusercontent.com/Denmm-9/Mounx/refs/heads/main/AntWar.lua",
