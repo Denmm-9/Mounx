@@ -48,12 +48,19 @@ for placeId in pairs(games) do
     end
 end
 
---// 🔔 Mostrar notificación formateada
-local deviceLine = "Device: " .. deviceType
-local executorLine = "Executor: " .. executor
-local gameLine = isInList and ("Game: " .. gameName) or ("Game not in list: " .. gameName)
+--// 🔔 Notificación 1: Device
+NotificationLib:Info("Device Detected", "Device: " .. deviceType, 4)
 
-NotificationLib:Info("Loader Initialized", table.concat({deviceLine, executorLine, gameLine}, "\n"), 6)
+--// 🔔 Notificación 2: Executor
+NotificationLib:Info("Executor Detected", "Executor: " .. executor, 4)
+
+--// 🔔 Notificación 3: Game
+if isInList then
+    NotificationLib:Success("Game Found", "Game: " .. gameName, 5)
+else
+    NotificationLib:Warning("Game Not in List", "Game not in list: " .. gameName, 5)
+end
+
 
 --// 🔁 Ejecutar script si está en la lista
 for placeId, data in pairs(games) do
