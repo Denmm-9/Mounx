@@ -1,25 +1,25 @@
--- loader.lua
 if not game:IsLoaded() then
     game.Loaded:Wait()
     task.wait(0.5)
 end
 
 local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 local LIST_URL = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/Game_list.lua"
 
--- Soporte para múltiples scripts por dispositivo
+-- Universal scripts
 local UNIVERSAL = {
     pc = {
         "https://raw.githubusercontent.com/Denmm-9/Universal/main/NonUniversal.lua",
-        "https://raw.githubusercontent.com/Denmm-9/Universal/main/SilentAimV2.lua"
+        "https://raw.githubusercontent.com/Denmm-9/Universal/main/SilentAimV2.lua",
     },
-    mobile = {
-        "https://raw.githubusercontent.com/Denmm-9/Universal/main/MobileUniversal.lua"
-    }
+    mobile = "https://raw.githubusercontent.com/Denmm-9/Universal/main/MobileUniversal.lua"
 }
 
--- Detección del dispositivo
+-- Detectar dispositivo
 local function detectDevice()
     if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
         return "mobile"
@@ -28,40 +28,45 @@ local function detectDevice()
 end
 
 local device = detectDevice()
-print("[Loader] Detected device:", device)
+print("[Loader] Device:", device)
 
--- Función para obtener tabla de juegos remota
+-- Cargar tabla de juegos remota
 local function fetchGameList(url)
     local ok, resp = pcall(function() return game:HttpGet(url) end)
     if not ok then return nil end
+
     local ok2, chunk = pcall(function() return loadstring(resp)() end)
-    if not ok2 or type(chunk) ~= "table" then return nil end
+    if not ok2 or type(chunk) ~= "table" then
+        return nil
+    end
     return chunk
 end
 
 local games = fetchGameList(LIST_URL)
 
--- Función para ejecutar scripts remotos
 local function loadRemoteScript(url)
+    if not url then return end
     local ok, resp = pcall(function() return game:HttpGet(url) end)
-    if not ok then return warn("[Loader] Failed:", resp) end
+    if not ok then warn("Download failed:", resp) return end
     local ok2, err = pcall(function() loadstring(resp)() end)
-    if not ok2 then warn("[Loader] Error:", err) end
+    if not ok2 then warn("Error:", err) end
 end
 
--- Si hay coincidencia de juego
 local function tryLoadFromList(gamesTable)
     if not gamesTable then return false end
     for placeId, data in pairs(gamesTable) do
         if tonumber(placeId) == tonumber(game.PlaceId) then
-            local url = type(data) == "table" and data[device] or data
-            if not url then
-                warn("[Loader] No script for this device.")
-                return false
+            if type(data) == "table" then
+                local url = data[device]
+                if url then
+                    print("[Loader] Loading specific script:", url)
+                    loadRemoteScript(url)
+                    return true
+                end
+            elseif type(data) == "string" then
+                loadRemoteScript(data)
+                return true
             end
-            print("[Loader] Loading game script:", url)
-            loadRemoteScript(url)
-            return true
         end
     end
     return false
@@ -69,57 +74,99 @@ end
 
 local loaded = tryLoadFromList(games)
 
--- Si no hay script en lista, muestra GUI universal
+-- Si no se encontró el juego
 if not loaded then
-    local player = game:GetService("Players").LocalPlayer
-    local parent = (game:GetService("RunService"):IsStudio() and player.PlayerGui) or game.CoreGui
+    print("[Loader] Game not found in list")
 
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "UniversalLoaderPrompt"
-    screenGui.ResetOnSpawn = false
-    screenGui.Parent = parent
+    if device == "mobile" then
+        -- Cargar universal móvil directamente
+        loadRemoteScript(UNIVERSAL.mobile)
+        return
+    end
 
-    local frame = Instance.new("Frame", screenGui)
-    frame.Size = UDim2.new(0, 320, 0, 180)
-    frame.Position = UDim2.new(0.5, -160, 0.5, -90)
-    frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-    frame.BorderSizePixel = 0
+--UI
+    local player = Players.LocalPlayer
+    local parent = (RunService:IsStudio() and player.PlayerGui) or game.CoreGui
 
-    local title = Instance.new("TextLabel", frame)
-    title.Size = UDim2.new(1, -20, 0, 40)
-    title.Position = UDim2.new(0, 10, 0, 10)
-    title.BackgroundTransparency = 1
-    title.Text = "Universal Loader - Select Device"
-    title.TextColor3 = Color3.fromRGB(255,255,255)
-    title.TextScaled = true
+    local function new(Class, props)
+        local inst = Instance.new(Class)
+        for k,v in pairs(props) do inst[k] = v end
+        return inst
+    end
 
-    local function createButton(text, pos, deviceType)
-        local btn = Instance.new("TextButton", frame)
-        btn.Size = UDim2.new(0.44, 0, 0, 50)
-        btn.Position = pos
-        btn.Text = text
-        btn.TextScaled = true
-        btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-        btn.TextColor3 = Color3.fromRGB(255,255,255)
+    local ui = new("ScreenGui", { Name="UniversalPC", Parent=parent })
+    local frame = new("Frame", {
+        Size = UDim2.new(0, 300, 0, 220),
+        Position = UDim2.new(0.5, -150, 0.5, -110),
+        BackgroundColor3 = Color3.fromRGB(16,16,16),
+        BorderSizePixel = 0,
+        Parent = ui
+    })
+    new("UICorner", { CornerRadius = UDim.new(0,6), Parent=frame })
+
+    local title = new("TextLabel", {
+        Size = UDim2.new(1,0,0,40),
+        BackgroundColor3 = Color3.fromRGB(22,22,22),
+        Text = "Universal Loader - PC",
+        TextColor3 = Color3.fromRGB(255,255,255),
+        TextScaled = true,
+        Parent = frame
+    })
+    new("UICorner", { CornerRadius = UDim.new(0,6), Parent=title })
+
+    local scroll = new("ScrollingFrame", {
+        Size = UDim2.new(1,-20,1,-80),
+        Position = UDim2.new(0,10,0,50),
+        CanvasSize = UDim2.new(0,0,0,0),
+        ScrollBarThickness = 6,
+        BackgroundTransparency = 1,
+        Parent = frame
+    })
+
+    local layout = new("UIListLayout", { Padding = UDim.new(0,6), Parent=scroll })
+    local selected
+
+    for i, url in ipairs(UNIVERSAL.pc) do
+        local btn = new("TextButton", {
+            Size = UDim2.new(1,0,0,40),
+            BackgroundColor3 = Color3.fromRGB(30,30,30),
+            Text = "Script "..i,
+            TextColor3 = Color3.fromRGB(255,255,255),
+            TextScaled = true,
+            Parent = scroll
+        })
+        new("UICorner", { CornerRadius = UDim.new(0,4), Parent=btn })
+
         btn.MouseButton1Click:Connect(function()
-            screenGui:Destroy()
-            local urls = UNIVERSAL[deviceType]
-            if not urls then return warn("[Loader] No URLs for:", deviceType) end
-            print("[Loader] Loading universal scripts for:", deviceType)
-            for _, link in ipairs(urls) do
-                loadRemoteScript(link)
+            selected = url
+            for _, b in ipairs(scroll:GetChildren()) do
+                if b:IsA("TextButton") then
+                    b.BackgroundColor3 = Color3.fromRGB(30,30,30)
+                end
             end
+            btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
         end)
     end
 
-    createButton("PC", UDim2.new(0.05, 0, 0.45, 0), "pc")
-    createButton("Mobile", UDim2.new(0.51, 0, 0.45, 0), "mobile")
+    local loadBtn = new("TextButton", {
+        Size = UDim2.new(0.9,0,0,40),
+        Position = UDim2.new(0.05,0,1,-45),
+        BackgroundColor3 = Color3.fromRGB(24,24,24),
+        Text = "Load Selected",
+        TextColor3 = Color3.fromRGB(255,255,255),
+        TextScaled = true,
+        Parent = frame
+    })
+    new("UICorner", { CornerRadius = UDim.new(0,4), Parent=loadBtn })
 
-    local hint = Instance.new("TextLabel", frame)
-    hint.Size = UDim2.new(1, -20, 0, 28)
-    hint.Position = UDim2.new(0, 10, 0.82, 0)
-    hint.BackgroundTransparency = 1
-    hint.Text = "Choose which universal script to load."
-    hint.TextColor3 = Color3.fromRGB(200,200,200)
-    hint.TextScaled = true
+    loadBtn.MouseButton1Click:Connect(function()
+        if not selected then
+            loadBtn.Text = "Select a script first!"
+            task.wait(1)
+            loadBtn.Text = "Load Selected"
+            return
+        end
+        ui:Destroy()
+        loadRemoteScript(selected)
+    end)
 end
