@@ -3,7 +3,6 @@ if not game:IsLoaded() then
     task.wait(1)
 end
 
---// 📦 Dependencias
 local NotificationLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/AccountBurner/Utility/refs/heads/main/NotificationLib"))()
 local UIS = game:GetService("UserInputService")
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -11,21 +10,17 @@ local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
---// 📱 Detección de dispositivo
 local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 local deviceType = isMobile and "Mobile" or "PC"
 
---// 💾 Información del juego
 local gameName = "Unknown Game"
 pcall(function()
     local info = MarketplaceService:GetProductInfo(game.PlaceId)
     gameName = info.Name
 end)
 
---// 🧠 Identificar executor
 local executor = identifyexecutor and identifyexecutor() or "Unknown Executor"
 
---// 📋 Cargar lista de juegos
 local ListURL = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/Game_list.lua"
 local success, result = pcall(function()
     return loadstring(game:HttpGet(ListURL))()
@@ -39,7 +34,6 @@ end
 local games = result
 local loadedGame = false
 
---// 🔎 Verificar si el juego está en la lista
 local isInList = false
 for placeId in pairs(games) do
     if game.PlaceId == placeId then
@@ -48,16 +42,12 @@ for placeId in pairs(games) do
     end
 end
 
---// 🔔 Notificación 1: Device
-NotificationLib:Info("Device Detected", "Device: " .. deviceType, 4)
 
---// 🔔 Notificación 2: Executor (0.7s después)
-task.delay(0.7, function()
+NotificationLib:Info("Device Detected", "Device: " .. deviceType, 4)
+task.delay(0.4, function()
     NotificationLib:Info("Executor Detected", "Executor: " .. executor, 4)
 end)
-
---// 🔔 Notificación 3: Game (1.4s después)
-task.delay(1.4, function()
+task.delay(0.9, function()
     if isInList then
         NotificationLib:Success("Game Found", "Game: " .. gameName, 5)
     else
@@ -66,7 +56,6 @@ task.delay(1.4, function()
 end)
 
 
---// 🔁 Ejecutar script si está en la lista
 for placeId, data in pairs(games) do
     if game.PlaceId == placeId then
         local scriptUrl = nil
@@ -84,7 +73,6 @@ for placeId, data in pairs(games) do
     end
 end
 
---// 🌍 Si no hay juego en la lista, mostrar selector universal
 if not loadedGame then
     local universalScripts = {}
     if deviceType == "PC" then
