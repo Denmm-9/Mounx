@@ -51,12 +51,12 @@ end
 --// 🔔 Notificación 1: Device
 NotificationLib:Info("Device Detected", "Device: " .. deviceType, 4)
 
--- Esperar 0.7 segundos antes de mostrar la siguiente
+--// 🔔 Notificación 2: Executor (0.7s después)
 task.delay(0.7, function()
     NotificationLib:Info("Executor Detected", "Executor: " .. executor, 4)
 end)
 
--- Otra espera antes de mostrar la del juego
+--// 🔔 Notificación 3: Game (1.4s después)
 task.delay(1.4, function()
     if isInList then
         NotificationLib:Success("Game Found", "Game: " .. gameName, 5)
