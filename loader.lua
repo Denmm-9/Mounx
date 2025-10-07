@@ -7,7 +7,6 @@ local UIS = game:GetService("UserInputService")
 local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 local deviceType = isMobile and "mobile" or "pc"
 
--- 🧠 URLs
 local ListURL = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/Game_list.lua"
 
 local success, result = pcall(function()
@@ -22,7 +21,6 @@ end
 local games = result
 local loadedGame = false
 
--- 🎯 Intentar cargar script específico del juego
 for placeId, data in pairs(games) do
     if game.PlaceId == placeId then
         local scriptUrl = nil
@@ -41,7 +39,6 @@ for placeId, data in pairs(games) do
     end
 end
 
--- 🌍 Si no hay script específico, mostrar UI de universales
 if not loadedGame then
     print("🌍 No game found in Game_list. Showing universal script selector for:", deviceType)
 
@@ -57,7 +54,6 @@ if not loadedGame then
         }
     end
 
-    -- 🪄 Crear UI estilo HomaHub
     local ScreenGui = Instance.new("ScreenGui")
     local Frame = Instance.new("Frame")
     local Title = Instance.new("TextLabel")
