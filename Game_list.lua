@@ -9,7 +9,9 @@ local games = {
     [15118223068] = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/ChooseAnime.lua",
     [81734311524009] = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/DungeonHeroes.lua",
     [10219766033] = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/Panik.lua",
-    [6607797163] = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/RagdollB.lua"
+    [6607797163] = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/RagdollB.lua",
+    [7728848215] = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/SlashingSimulator.lua",
+    [15015810079] = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/ZombieHunters.lua",
 }
 
 return games
