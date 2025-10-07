@@ -77,7 +77,7 @@ if not loadedGame then
     Title.Size = UDim2.new(1, 0, 0, 40)
     Title.Position = UDim2.new(0, 0, 0, 0)
     Title.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-    Title.Text = "🌐 Universal Script Selector"
+    Title.Text = "Universal Script Selector"
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 16
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -97,7 +97,7 @@ if not loadedGame then
         Button.Size = UDim2.new(0.8, 0, 0, 40)
         Button.Position = UDim2.new(0.1, 0, 0, 50 * i)
         Button.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-        Button.Text = "▶️ " .. scriptInfo.Name
+        Button.Text = "+ " .. scriptInfo.Name
         Button.Font = Enum.Font.Gotham
         Button.TextSize = 14
         Button.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -113,7 +113,7 @@ if not loadedGame then
         end)
 
         Button.MouseButton1Click:Connect(function()
-            print("⚡ Loading universal script:", scriptInfo.Name)
+            print("Loading universal script:", scriptInfo.Name)
             task.spawn(function()
                 pcall(function()
                     loadstring(game:HttpGet(scriptInfo.URL))()
