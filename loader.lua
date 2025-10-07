@@ -3,11 +3,16 @@ if not game:IsLoaded() then
     task.wait(1)
 end
 
+-- 🔔 NotificationLib
+local NotificationLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/AccountBurner/Utility/refs/heads/main/NotificationLib"))()
+
 local UIS = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 local deviceType = isMobile and "mobile" or "pc"
+
+NotificationLib:Info("Loader", "Platform detected: " .. deviceType, 3)
 
 local ListURL = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/Game_list.lua"
 
@@ -16,7 +21,7 @@ local success, result = pcall(function()
 end)
 
 if not success then
-    warn("Error loading Game_list:", result)
+    NotificationLib:Error("Game List Error", tostring(result), 5)
     return
 end
 
@@ -33,8 +38,15 @@ for placeId, data in pairs(games) do
         end
 
         if scriptUrl then
-            print("🔹 Loading game-specific script for", deviceType, ":", game.PlaceId)
-            loadstring(game:HttpGet(scriptUrl))()
+            NotificationLib:Info("Game Detected", "Loading script for " .. deviceType, 3)
+            local ok, err = pcall(function()
+                loadstring(game:HttpGet(scriptUrl))()
+            end)
+            if ok then
+                NotificationLib:Success("Loaded", "Script loaded successfully", 3)
+            else
+                NotificationLib:Error("Load Error", tostring(err), 5)
+            end
             loadedGame = true
         end
         break
@@ -42,7 +54,7 @@ for placeId, data in pairs(games) do
 end
 
 if not loadedGame then
-    print(" No game found in Game_list. Showing universal script selector for:", deviceType)
+    NotificationLib:Warning("Universal Mode", "No game found in list. Opening universal selector.", 4)
 
     local universalScripts = {}
     if deviceType == "pc" then
@@ -174,18 +186,24 @@ if not loadedGame then
         Btn.MouseButton1Click:Connect(function()
             SelectedScript = info
             LastUpdate.Text = "Selected: " .. info.Name
+            NotificationLib:Info("Selected", info.Name, 3)
         end)
     end
 
     LoadButton.MouseButton1Click:Connect(function()
         if not SelectedScript then
-            LastUpdate.Text = "Select a script first."
+            NotificationLib:Warning("Select Script", "Please select one first", 3)
             return
         end
-        print("Loading universal:", SelectedScript.Name)
-        pcall(function()
+        NotificationLib:Info("Loading", SelectedScript.Name, 3)
+        local ok, err = pcall(function()
             loadstring(game:HttpGet(SelectedScript.URL))()
         end)
+        if ok then
+            NotificationLib:Success("Loaded", "Script loaded successfully", 3)
+        else
+            NotificationLib:Error("Error", tostring(err), 4)
+        end
         ScreenGui:Destroy()
     end)
 end
