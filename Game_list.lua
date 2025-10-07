@@ -1,5 +1,5 @@
 local games = {
-    [11157166793] = "https://github.com/Denmm-9/Mounx/blob/main/AntWar.lua",
+    [11157166793] = "https://raw.githubusercontent.com/Denmm-9/Mounx/refs/heads/main/AntWar.lua",
     
 }
 
