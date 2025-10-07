@@ -86,8 +86,6 @@ end
 
 --// 🌍 Si no hay juego en la lista, mostrar selector universal
 if not loadedGame then
-    NotificationLib:Warning("No Game Match", "Opening universal selector for " .. deviceType, 5)
-
     local universalScripts = {}
     if deviceType == "PC" then
         universalScripts = {
