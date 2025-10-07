@@ -25,9 +25,6 @@ end)
 --// 🧠 Identificar executor
 local executor = identifyexecutor and identifyexecutor() or "Unknown Executor"
 
---// 🔔 Mostrar notificación de inicio
-NotificationLib:Info("Loader", string.format("Device: %s\nGame: %s\nExecutor: %s", deviceType, gameName, executor), 6)
-
 --// 📋 Cargar lista de juegos
 local ListURL = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/Game_list.lua"
 local success, result = pcall(function()
@@ -42,6 +39,23 @@ end
 local games = result
 local loadedGame = false
 
+--// 🔎 Verificar si el juego está en la lista
+local isInList = false
+for placeId in pairs(games) do
+    if game.PlaceId == placeId then
+        isInList = true
+        break
+    end
+end
+
+--// 🔔 Mostrar notificación formateada
+local deviceLine = "Device: " .. deviceType
+local executorLine = "Executor: " .. executor
+local gameLine = isInList and ("Game: " .. gameName) or ("Game not in list: " .. gameName)
+
+NotificationLib:Info("Loader Initialized", table.concat({deviceLine, executorLine, gameLine}, "\n"), 6)
+
+--// 🔁 Ejecutar script si está en la lista
 for placeId, data in pairs(games) do
     if game.PlaceId == placeId then
         local scriptUrl = nil
