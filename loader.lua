@@ -53,8 +53,8 @@ task.delay(0.6, function()
             NotificationLib:Success("Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
         else
             NotificationLib:Warning("Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
-        end)
-    end
+        end
+    end)
 
 for placeId, data in pairs(games) do
     if game.PlaceId == placeId then
