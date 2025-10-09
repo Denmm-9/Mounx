@@ -54,10 +54,12 @@ task.delay(0.6, function()
     else
         NotificationLib:Info(
             "Unsupported Game - Welcome", 
-            "Executor: "..executor "\n" "Device: "..deviceType, 
-            4)
+            "Executor: " .. executor .. "\n" .. "Device: " .. deviceType, 
+            4
+        )
     end
 end)
+
 
 for placeId, data in pairs(games) do
     if game.PlaceId == placeId then
