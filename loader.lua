@@ -51,7 +51,7 @@ task.delay(0.6, function()
     if isInList then
         NotificationLib:Success("Game Found", "Game: " .. gameName, 5)
     else
-        NotificationLib:Warning("Game Not in List", "Game not in list: " .. gameName, 5)
+        NotificationLib:Warning("Game Not in List" .. gameName, 5)
     end
 end)
 
