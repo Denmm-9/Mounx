@@ -43,7 +43,7 @@ for placeId in pairs(games) do
 end
 
 if isInList then
-    NotificationLib:Info(gameName, "Executor: "..executor, 3)
+    NotificationLib:Sucess(gameName, "Executor: "..executor, 3)
 else
     NotificationLib:Error(gameName, "Game not supported", 3)
 end
@@ -78,7 +78,7 @@ for placeId, data in pairs(games) do
 end
 
 if not loadedGame then
-    task.wait(3)
+    task.wait(4)
     local universalScripts = {}
     if deviceType == "PC" then
         universalScripts = {
