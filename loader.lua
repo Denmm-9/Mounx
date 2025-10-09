@@ -95,7 +95,7 @@ ScreenGui.Name = "UniversalSelector"
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
-ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Parent = PlayerGui
 
 local Holder = Instance.new("Frame")
 Holder.Parent = ScreenGui
@@ -110,10 +110,11 @@ Top.Size = UDim2.new(1, 0, 0.12, 0)
 Top.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
 Top.BorderSizePixel = 0
 
-local UIDragDetector = Instance.new("UIDragDetector")
-UIDragDetector.BoundingUI = ScreenGui
-UIDragDetector.ReferenceUIInstance = Top
-UIDragDetector.Parent = Holder
+-- ✅ Drag support
+local UIDrag = Instance.new("UIDragDetector")
+UIDrag.Parent = Holder
+UIDrag.ReferenceUIInstance = Top
+UIDrag.BoundingUI = ScreenGui
 
 local Title = Instance.new("TextLabel")
 Title.Parent = Top
