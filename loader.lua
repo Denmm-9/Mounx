@@ -47,7 +47,7 @@ task.delay(0.6, function()
     if isInList then
         NotificationLib:Success("Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
     else
-        NotificationLib:Warning(gameName, "Game not supported", 5)
+        NotificationLib:Error("Game not supported", 5)
     end
 end)
 
