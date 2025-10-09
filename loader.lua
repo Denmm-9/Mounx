@@ -42,18 +42,14 @@ for placeId in pairs(games) do
     end
 end
 
-if isInList then
-    NotificationLib:Info("Executor: "..executor, "Game supported", 3)
-else
-    NotificationLib:Error(gameName, "Game not supported", 3)
-end
-
+NotificationLib:Info(gameName, "Executor: "..executor, 3);
 task.delay(0.6, function()
     if isInList then
         NotificationLib:Success("Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
+    else
+        NotificationLib:Warning("Unsupported Game", 5)
     end
 end)
-
 
 
 for placeId, data in pairs(games) do
