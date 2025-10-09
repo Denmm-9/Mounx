@@ -43,7 +43,7 @@ for placeId in pairs(games) do
 end
 
 if isInList then
-    NotificationLib:Success("Executor: "..executor, "Game supported", 3)
+    NotificationLib:Info("Executor: "..executor, "Game supported", 3)
 else
     NotificationLib:Error(gameName, "Game not supported", 3)
 end
