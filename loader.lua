@@ -54,7 +54,7 @@ task.delay(0.6, function()
     else
         NotificationLib:Info(
             "Unsupported Game - Welcome", 
-            "Executor: " .. executor .. "\n" .. "Device: " .. deviceType, 
+            "Executor: " .. executor .., 
             4
         )
     end
