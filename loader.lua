@@ -49,11 +49,8 @@ else
 end
 
 task.delay(0.6, function()
-    if isInList then
         NotificationLib:Success("Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
-    end
-end)
-
+    end)
 
 for placeId, data in pairs(games) do
     if game.PlaceId == placeId then
@@ -73,7 +70,7 @@ for placeId, data in pairs(games) do
 end
 
 if not loadedGame then
-    task.wait(2)
+    task.wait(3)
     local universalScripts = {}
     if deviceType == "PC" then
         universalScripts = {
