@@ -6,9 +6,9 @@ end
 local NotificationLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/AccountBurner/Utility/refs/heads/main/NotificationLib"))()
 local UIS = game:GetService("UserInputService")
 local MarketplaceService = game:GetService("MarketplaceService")
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
+local players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = Player:WaitForChild("PlayerGui")
 
 local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 local deviceType = isMobile and "Mobile" or "PC"
@@ -45,7 +45,7 @@ end
 NotificationLib:Info(gameName, "Executor: "..executor, 3);
 task.delay(0.6, function()
     if isInList then
-        NotificationLib:Success("Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
+        NotificationLib:Success("Welcome "..player.DisplayName, "Device: "..deviceType, 4)
     else
         NotificationLib:Warning(gameName, "Game not supported", 5)
     end
@@ -89,7 +89,7 @@ if not loadedGame then
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ResetOnSpawn = false
     ScreenGui.IgnoreGuiInset = true
-    ScreenGui.Parent = PlayerGui
+    ScreenGui.Parent = playerGui
 
     local Holder = Instance.new("Frame")
     Holder.Parent = ScreenGui
