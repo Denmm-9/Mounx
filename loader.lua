@@ -93,7 +93,7 @@ if not loadedGame then
         }
     end
 
-    local ScreenGui = Instance.new("ScreenGui")
+local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "UniversalSelector"
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
@@ -112,6 +112,12 @@ Top.Parent = Holder
 Top.Size = UDim2.new(1, 0, 0.12, 0)
 Top.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
 Top.BorderSizePixel = 0
+
+local UIDragDetector = Elements:New("UIDragDetector", {
+    BoundingUI = ScreenGui;
+    ReferenceUIInstance = Top;
+    Parent = Holder;
+})
 
 local Title = Instance.new("TextLabel")
 Title.Parent = Top
