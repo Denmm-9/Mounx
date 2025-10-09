@@ -52,7 +52,7 @@ task.delay(0.6, function()
         if isInList then
             NotificationLib:Success("Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
         else
-            NotificationLib:Warning("Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
+            NotificationLib:Warning("Unsupported, Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
         end
     end)
 
