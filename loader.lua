@@ -7,7 +7,7 @@ local NotificationLib = loadstring(game:HttpGet("https://raw.githubusercontent.c
 local UIS = game:GetService("UserInputService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
-local Player = Players.LocalPlayer;
+local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
 local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
