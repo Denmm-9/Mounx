@@ -43,22 +43,17 @@ for placeId in pairs(games) do
 end
 
 
--- Lógica para armar el mensaje del executor con o sin "Game not supported"
-local gameMessage
-if isInList then
-    gameMessage = "Executor: " .. executor
-else
-    gameMessage = "Game not supported | Executor: " .. executor
-end
-
--- Primera notificación con el nombre del juego como título
-NotificationLib:Info(gameName, gameMessage, 5)
-
--- Segunda notificación con usuario y ejecuciones
+NotificationLib:Info("Device Detected", "Device: " .. deviceType, 4)
 task.delay(0.2, function()
-    NotificationLib:Info("Welcome " .. username, "Executions: " .. executions, 4)
+    NotificationLib:Info("Executor Detected", "Executor: " .. executor, 4)
 end)
-
+task.delay(0.6, function()
+    if isInList then
+        NotificationLib:Success("Game Found", "Game: " .. gameName, 5)
+    else
+        NotificationLib:Warning(gameName, "Game not supported", 5)
+    end
+end)
 
 
 for placeId, data in pairs(games) do
