@@ -54,9 +54,8 @@ task.delay(0.6, function()
     else
         NotificationLib:Info(
             "Unsupported Game - Welcome", 
-            Player.DisplayName .. "\n" .. deviceType, 
-            4
-        )
+            "Executor: "..executor "\n" "Device: "..deviceType, 
+            4)
     end
 end)
 
