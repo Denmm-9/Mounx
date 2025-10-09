@@ -1,4 +1,4 @@
-repeat task.wait(0.1) until game:IsLoaded();
+repeat task.wait(0.1) until game:IsLoaded()
 
 local NotificationLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/AccountBurner/Utility/refs/heads/main/NotificationLib"))()
 local UIS = game:GetService("UserInputService")
