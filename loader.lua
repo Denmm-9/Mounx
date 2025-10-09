@@ -52,9 +52,13 @@ task.delay(0.6, function()
         if isInList then
             NotificationLib:Success("Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
         else
-            NotificationLib:Info("Unsupported Game - Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
-        end
-    end)
+            NotificationLib:Info(
+    "Unsupported Game - Welcome", 
+    Player.DisplayName .. "\nDevice: " .. deviceType, 
+    4
+)
+    end
+end)
 
 for placeId, data in pairs(games) do
     if game.PlaceId == placeId then
