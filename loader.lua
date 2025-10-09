@@ -95,7 +95,7 @@ ScreenGui.Name = "UniversalSelector"
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
-ScreenGui.Parent = PlayerGui
+ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 
 local Holder = Instance.new("Frame")
 Holder.Parent = ScreenGui
@@ -110,11 +110,10 @@ Top.Size = UDim2.new(1, 0, 0.12, 0)
 Top.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
 Top.BorderSizePixel = 0
 
-local UIDragDetector = Elements:New("UIDragDetector", {
-    BoundingUI = ScreenGui;
-    ReferenceUIInstance = Top;
-    Parent = Holder;
-})
+local UIDragDetector = Instance.new("UIDragDetector")
+UIDragDetector.BoundingUI = ScreenGui
+UIDragDetector.ReferenceUIInstance = Top
+UIDragDetector.Parent = Holder
 
 local Title = Instance.new("TextLabel")
 Title.Parent = Top
@@ -207,45 +206,4 @@ LoadButton.MouseButton1Click:Connect(function()
     end
     loadstring(game:HttpGet(SelectedScript.URL))()
     ScreenGui:Destroy()
-end)
-    
-local dragging
-local dragInput
-local dragStart
-local startPos
-
-local function update(input)
-    local delta = input.Position - dragStart
-    Holder.Position = UDim2.new(
-        startPos.X.Scale,
-        startPos.X.Offset + delta.X,
-        startPos.Y.Scale,
-        startPos.Y.Offset + delta.Y
-    )
-end
-
-Top.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = Holder.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-Top.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
 end)
