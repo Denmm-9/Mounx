@@ -54,12 +54,11 @@ task.delay(0.6, function()
     else
         NotificationLib:Info(
             "Unsupported Game - Welcome", 
-            "Executor: " .. executor .., 
+            "Executor: " .. executor, 
             4
         )
     end
 end)
-
 
 for placeId, data in pairs(games) do
     if game.PlaceId == placeId then
@@ -79,7 +78,7 @@ for placeId, data in pairs(games) do
 end
 
 if not loadedGame then
-    task.wait(5)
+    task.wait(4)
     local universalScripts = {}
     if deviceType == "PC" then
         universalScripts = {
