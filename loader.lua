@@ -42,13 +42,10 @@ for placeId in pairs(games) do
     end
 end
 
-NotificationLib:Info("Device Detected", "Device: " .. deviceType, 4)
-task.delay(0.2, function()
-    NotificationLib:Info("Executor Detected", "Executor: " .. executor, 4)
-end)
+NotificationLib:Info(gameName, "Executor: "..executor, 3);
 task.delay(0.6, function()
     if isInList then
-        NotificationLib:Success("Game Found", "Game: " .. gameName, 5)
+        NotificationLib:Success("Welcome "..player.DisplayName, "Device: "..device, 4)
     else
         NotificationLib:Warning(gameName, "Game not supported", 5)
     end
