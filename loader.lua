@@ -50,7 +50,7 @@ end
 
 task.delay(0.6, function()
     if isInList then
-        NotificationLib:Success("Welcome "..player.DisplayName, "Device: "..deviceType, 4)
+        NotificationLib:Success("Welcome "..Player.DisplayName, "Device: "..deviceType, 4)
     end
 end)
 
