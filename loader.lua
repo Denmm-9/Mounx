@@ -197,7 +197,6 @@ if not loadedGame then
             NotificationLib:Warning("No Script", "Select a script first", 4)
             return
         end
-        NotificationLib:Info("Loading", "Executing " .. SelectedScript.Name, 4)
         loadstring(game:HttpGet(SelectedScript.URL))()
         ScreenGui:Destroy()
     end)
