@@ -51,11 +51,23 @@ local function createButton(name, position, onClickFunction)
         pcall(onClickFunction, active)
     end)
 end
+
 -- Expand Hitboxes
 local originalStates = {}
+local whitelist = { "TheFox7u7", "PaginasDoDaqri" }
+
+local function isWhitelisted(player)
+    for _, name in ipairs(whitelist) do
+        if player.Name == name then
+            return true
+        end
+    end
+    return false
+end
+
 local function expandAllPlayerHitboxes()
     for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
+        if player ~= LocalPlayer and not isWhitelisted(player) and player.Character then
             pcall(function()
                 local hrp = player.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
@@ -69,7 +81,7 @@ local function expandAllPlayerHitboxes()
                             Color = hrp.Color
                         }
                     end
-                    hrp.Size = Vector3.new(10,10,10)
+                    hrp.Size = Vector3.new(5,5,5)
                     hrp.CanCollide = false
                     hrp.CanTouch = false
                     hrp.Transparency = 0.9
@@ -124,6 +136,7 @@ createButton("Expand Hitboxes", 0.1, function(active)
         restoreHitboxes()
     end
 end)
+
 -- AntiSlap 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
