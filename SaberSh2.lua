@@ -73,10 +73,9 @@ local function expandAllPlayerHitboxes()
                     originalStates[player] = {}
                 end
 
-                -- Recorre todas las partes del cuerpo
                 for _, part in ipairs(player.Character:GetChildren()) do
                     if part:IsA("BasePart") then
-                        -- Guarda estado original solo una vez
+
                         if not originalStates[player][part.Name] then
                             originalStates[player][part.Name] = {
                                 Size = part.Size,
@@ -87,17 +86,14 @@ local function expandAllPlayerHitboxes()
                             }
                         end
 
-                        -- Si es la cabeza, no tocar la colisión
                         if part.Name == "Head" then
                             part.CanCollide = true
                             part.CanTouch = true
                         else
-                            -- Todo lo demás atraviesa
                             part.CanCollide = false
                             part.CanTouch = false
                         end
 
-                        -- Expande solo el HumanoidRootPart para detección
                         if part.Name == "HumanoidRootPart" then
                             part.Size = Vector3.new(5, 5, 5)
                             part.Transparency = 0.9
@@ -139,8 +135,6 @@ createButton("Expand Hitboxes", 0.02, function(active)
         restoreHitboxes()
     end
 end)
-
-
 
 -- AntiSlap 
 local SlappedModule = require(ReplicatedStorage:WaitForChild("LightsaberModules"):WaitForChild("SharedBehavior"):WaitForChild("Slapped"))
