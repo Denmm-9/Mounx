@@ -51,12 +51,23 @@ local function createButton(name, position, onClickFunction)
     end)
     return button
 end
+
 -- Expand Hitboxes
 local originalStates = {}
+local whitelist = { "zSan_Kun", "HighFashi123" }
+
+local function isWhitelisted(player)
+    for _, name in ipairs(whitelist) do
+        if player.Name == name then
+            return true
+        end
+    end
+    return false
+end
 
 local function expandAllPlayerHitboxes()
     for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
+        if player ~= LocalPlayer and not isWhitelisted(player) and player.Character then
             pcall(function()
                 local hrp = player.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
@@ -125,6 +136,7 @@ createButton("Expand Hitboxes", 00.02, function(active)
         restoreHitboxes()
     end
 end)
+
 
 -- AntiSlap 
 local SlappedModule = require(ReplicatedStorage:WaitForChild("LightsaberModules"):WaitForChild("SharedBehavior"):WaitForChild("Slapped"))
