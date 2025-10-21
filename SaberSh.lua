@@ -86,7 +86,7 @@ local function expandAllPlayerHitboxes()
                             }
                         end
 
-                        if  part.Name == "Head" then
+                        if part.Name == "Head" then
                             part.CanCollide = true
                             part.CanTouch = true
                         elseif part.Name == "HumanoidRootPart" then
@@ -95,14 +95,14 @@ local function expandAllPlayerHitboxes()
                             part.Color = Color3.fromRGB(255, 255, 255)
                             part.CanCollide = false
                             part.CanTouch = false
-                            end
-                        end
-                    end
-                end
-            end)
+                        end 
+                    end 
+                end 
+            end) 
         end
-    end
+    end 
 end
+
 
 local function restoreHitboxes()
     for player, parts in pairs(originalStates) do
