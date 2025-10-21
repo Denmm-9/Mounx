@@ -86,10 +86,7 @@ local function expandAllPlayerHitboxes()
                             }
                         end
 
-                        if part.Name == "Head" then
-                            part.CanCollide = true
-                            part.CanTouch = true
-                        elseif part.Name == "HumanoidRootPart" then
+                            if part.Name == "HumanoidRootPart" then
                             part.Size = Vector3.new(10, 10, 10)
                             part.Transparency = 0.9
                             part.Color = Color3.fromRGB(255, 255, 255)
