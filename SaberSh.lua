@@ -98,7 +98,6 @@ local function expandAllPlayerHitboxes()
             end) 
         end
     end 
-end
 
 local myChar = LocalPlayer.Character
     if myChar then
