@@ -75,26 +75,29 @@ local function expandAllPlayerHitboxes()
 
                 for _, part in ipairs(player.Character:GetChildren()) do
                     if part:IsA("BasePart") then
+
                         if not originalStates[player][part.Name] then
                             originalStates[player][part.Name] = {
                                 Size = part.Size,
                                 CanCollide = part.CanCollide,
                                 CanTouch = part.CanTouch,
                                 Transparency = part.Transparency,
-                                Color = part.Color,
-                                CustomPhysicalProperties = part.CustomPhysicalProperties
+                                Color = part.Color
                             }
                         end
 
+                        if part.Name == "Head" then
+                            part.CanCollide = true
+                            part.CanTouch = true
+                        else
+                            part.CanCollide = false
+                            part.CanTouch = false
+                        end
+
                         if part.Name == "HumanoidRootPart" then
-                            part.Size = Vector3.new(10, 10, 10)
+                            part.Size = Vector3.new(8,8,8)
                             part.Transparency = 0.9
                             part.Color = Color3.fromRGB(255, 255, 255)
-                            part.CanCollide = false
-                        elseif part.Name == "Head" then
-                            part.CanCollide = true
-                        else
-                            part.CanCollide = true
                         end
                     end
                 end
@@ -114,7 +117,6 @@ local function restoreHitboxes()
                     part.CanTouch = data.CanTouch
                     part.Transparency = data.Transparency
                     part.Color = data.Color
-                    part.CustomPhysicalProperties = data.CustomPhysicalProperties
                 end
             end
         end
@@ -122,7 +124,7 @@ local function restoreHitboxes()
     originalStates = {}
 end
 
-createButton("Expand Hitboxes", 0.1 , function(active)
+createButton("Expand Hitboxes", 0.1, function(active)
     if active then
         expandHitboxesConnection = RunService.Heartbeat:Connect(expandAllPlayerHitboxes)
     else
