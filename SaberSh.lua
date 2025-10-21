@@ -75,42 +75,39 @@ local function expandAllPlayerHitboxes()
 
                 for _, part in ipairs(player.Character:GetChildren()) do
                     if part:IsA("BasePart") then
-
                         if not originalStates[player][part.Name] then
                             originalStates[player][part.Name] = {
                                 Size = part.Size,
                                 CanCollide = part.CanCollide,
                                 CanTouch = part.CanTouch,
                                 Transparency = part.Transparency,
-                                Color = part.Color
+                                Color = part.Color,
+                                CustomPhysicalProperties = part.CustomPhysicalProperties
                             }
                         end
 
-                        if part.Name == "Head" then
-                            part.CanCollide = true
-                            part.CanTouch = true
-                    elseif part.Name == "HumanoidRootPart" then
-                            part.Size = Vector3.new(10, 10, 10)
+                        if part.Name == "HumanoidRootPart" then
+                            part.Size = Vector3.new(5, 5, 5)
                             part.Transparency = 0.9
                             part.Color = Color3.fromRGB(255, 255, 255)
-                            part.CanCollide = false
-                            part.CanTouch = false
-                        end 
-                    end 
-                end 
-            end) 
-        end
-    end 
-end
-
-local myChar = LocalPlayer.Character
-    if myChar then
-        for _, part in ipairs(myChar:GetChildren()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
+                            part.CanCollide = true
+                            part.CanTouch = true
+                            part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+                        elseif part.Name == "Head" then
+                            part.CanCollide = true
+                            part.CanTouch = true
+                            part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+                        else
+                            part.CanCollide = true
+                            part.CanTouch = true
+                            part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+                        end
+                    end
+                end
+            end)
         end
     end
+end
 
 local function restoreHitboxes()
     for player, parts in pairs(originalStates) do
@@ -123,6 +120,7 @@ local function restoreHitboxes()
                     part.CanTouch = data.CanTouch
                     part.Transparency = data.Transparency
                     part.Color = data.Color
+                    part.CustomPhysicalProperties = data.CustomPhysicalProperties
                 end
             end
         end
@@ -130,7 +128,7 @@ local function restoreHitboxes()
     originalStates = {}
 end
 
-createButton("Expand Hitboxes", 0.1, function(active)
+createButton("Expand Hitboxes", 0.1 , function(active)
     if active then
         expandHitboxesConnection = RunService.Heartbeat:Connect(expandAllPlayerHitboxes)
     else
