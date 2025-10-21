@@ -100,6 +100,15 @@ local function expandAllPlayerHitboxes()
     end 
 end
 
+local myChar = LocalPlayer.Character
+    if myChar then
+        for _, part in ipairs(myChar:GetChildren()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end
 
 local function restoreHitboxes()
     for player, parts in pairs(originalStates) do
