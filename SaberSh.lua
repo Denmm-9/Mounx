@@ -90,17 +90,15 @@ local function expandAllPlayerHitboxes()
                             part.Size = Vector3.new(10, 10, 10)
                             part.Transparency = 0.9
                             part.Color = Color3.fromRGB(255, 255, 255)
-                            part.CanCollide = true
-                            part.CanTouch = true
+                            part.CanCollide = false
+                            part.CanTouch = false
                             part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
                         elseif part.Name == "Head" then
                             part.CanCollide = true
                             part.CanTouch = true
-                            part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
                         else
                             part.CanCollide = true
                             part.CanTouch = true
-                            part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
                         end
                     end
                 end
