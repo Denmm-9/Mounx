@@ -75,7 +75,6 @@ local function expandAllPlayerHitboxes()
 
                 for _, part in ipairs(player.Character:GetChildren()) do
                     if part:IsA("BasePart") then
-
                         if not originalStates[player][part.Name] then
                             originalStates[player][part.Name] = {
                                 Size = part.Size,
@@ -86,20 +85,20 @@ local function expandAllPlayerHitboxes()
                             }
                         end
 
-                            if part.Name == "HumanoidRootPart" then
+                        if part.Name == "HumanoidRootPart" then
                             part.Size = Vector3.new(10, 10, 10)
                             part.Transparency = 0.9
                             part.Color = Color3.fromRGB(255, 255, 255)
                             part.CanCollide = false
                             part.CanTouch = false
-                        end 
-                    end 
-                end 
-            end) 
+                        end
+                    end
+                end
+            end)
         end
-    end 
+    end
 
-local myChar = LocalPlayer.Character
+    local myChar = LocalPlayer.Character
     if myChar then
         for _, part in ipairs(myChar:GetChildren()) do
             if part:IsA("BasePart") then
@@ -108,6 +107,7 @@ local myChar = LocalPlayer.Character
         end
     end
 end
+
 
 local function restoreHitboxes()
     for player, parts in pairs(originalStates) do
