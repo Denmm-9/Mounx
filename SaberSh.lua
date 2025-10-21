@@ -52,9 +52,14 @@ local function createButton(name, position, onClickFunction)
     end)
 end
 
--- Expand Hitboxes 
+-- Expand Hitboxes
 local originalStates = {}
-local whitelist = { "TheFox7u7", "PaginasDoDaqri" }
+local expandHitboxesConnection
+
+local whitelist = {
+    "TheFox7u7",
+    "PaginasDoDaqri"
+}
 
 local function isWhitelisted(player)
     for _, name in ipairs(whitelist) do
@@ -69,37 +74,35 @@ local function expandAllPlayerHitboxes()
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and not isWhitelisted(player) and player.Character then
             pcall(function()
-                if not originalStates[player] then
-                    originalStates[player] = {}
+                local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    if not originalStates[player] then originalStates[player] = {} end
+                    if not originalStates[player].hrp then
+                        originalStates[player].hrp = {
+                            Size = hrp.Size,
+                            CanCollide = hrp.CanCollide,
+                            CanTouch = hrp.CanTouch,
+                            Transparency = hrp.Transparency,
+                            Color = hrp.Color
+                        }
+                    end
+                    hrp.Size = Vector3.new(10,10,10)
+                    hrp.CanCollide = false
+                    hrp.CanTouch = false
+                    hrp.Transparency = 0.9
+                    hrp.Color = Color3.fromRGB(255,255,255)
                 end
 
-                for _, part in ipairs(player.Character:GetChildren()) do
-                    if part:IsA("BasePart") then
-
-                        if not originalStates[player][part.Name] then
-                            originalStates[player][part.Name] = {
-                                Size = part.Size,
-                                CanCollide = part.CanCollide,
-                                CanTouch = part.CanTouch,
-                                Transparency = part.Transparency,
-                                Color = part.Color
-                            }
-                        end
-
-                        if part.Name == "Head" then
-                            part.CanCollide = true
-                            part.CanTouch = true
-                        else
-                            part.CanCollide = false
-                            part.CanTouch = false
-                        end
-
-                        if part.Name == "HumanoidRootPart" then
-                            part.Size = Vector3.new(8,8,8)
-                            part.Transparency = 0.9
-                            part.Color = Color3.fromRGB(255, 255, 255)
-                        end
+                local collisionPart = player.Character:FindFirstChild("CollisionPart")
+                if collisionPart then
+                    if not originalStates[player].collisionPart then
+                        originalStates[player].collisionPart = {
+                            CanCollide = collisionPart.CanCollide,
+                            CanTouch = collisionPart.CanTouch
+                        }
                     end
+                    collisionPart.CanCollide = false
+                    collisionPart.CanTouch = false
                 end
             end)
         end
@@ -107,17 +110,20 @@ local function expandAllPlayerHitboxes()
 end
 
 local function restoreHitboxes()
-    for player, parts in pairs(originalStates) do
+    for player, states in pairs(originalStates) do
         if player.Character then
-            for partName, data in pairs(parts) do
-                local part = player.Character:FindFirstChild(partName)
-                if part then
-                    part.Size = data.Size
-                    part.CanCollide = data.CanCollide
-                    part.CanTouch = data.CanTouch
-                    part.Transparency = data.Transparency
-                    part.Color = data.Color
-                end
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and states.hrp then
+                hrp.Size = states.hrp.Size
+                hrp.CanCollide = states.hrp.CanCollide
+                hrp.CanTouch = states.hrp.CanTouch
+                hrp.Transparency = states.hrp.Transparency
+                hrp.Color = states.hrp.Color
+            end
+            local collisionPart = player.Character:FindFirstChild("CollisionPart")
+            if collisionPart and states.collisionPart then
+                collisionPart.CanCollide = states.collisionPart.CanCollide
+                collisionPart.CanTouch = states.collisionPart.CanTouch
             end
         end
     end
