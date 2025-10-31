@@ -95,7 +95,7 @@ local function expandAllPlayerHitboxes()
                         end
 
                         if part.Name == "HumanoidRootPart" then
-                            part.Size = Vector3.new(4, 4, 4)
+                            part.Size = Vector3.new(5, 5, 5)
                             part.Transparency = 0.9
                             part.Color = Color3.fromRGB(255, 255, 255)
                         end
