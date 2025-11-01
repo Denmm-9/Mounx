@@ -62,7 +62,7 @@ local HitboxCaster = require(game:GetService("ReplicatedStorage").LightsaberModu
 
 local oldHitStart = HitboxCaster.HitStart
 local instantHitConnection
-local maxDistance = 9
+local maxDistance = 10
 
 local function enableInstantHitbox()
     HitboxCaster.HitStart = function(self, duration)
