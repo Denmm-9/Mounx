@@ -52,87 +52,68 @@ local function createButton(name, position, onClickFunction)
     return button
 end
 
--- Expand Hitboxes 
-local originalStates = {}
-local whitelist = { "zSan_Kun", "HighFashi123" }
+-- Instant Hitbox
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
 
-local function isWhitelisted(player)
-    for _, name in ipairs(whitelist) do
-        if player.Name == name then
-            return true
-        end
-    end
-    return false
-end
+local RaycastHitbox = require(game:GetService("ReplicatedStorage").LightsaberModules.RaycastHitbox)
+local HitboxCaster = require(game:GetService("ReplicatedStorage").LightsaberModules.RaycastHitbox.HitboxCaster)
 
-local function expandAllPlayerHitboxes()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and not isWhitelisted(player) and player.Character then
-            pcall(function()
-                if not originalStates[player] then
-                    originalStates[player] = {}
-                end
+local oldHitStart = HitboxCaster.HitStart
+local instantHitConnection
+local maxDistance = 11 
 
-                for _, part in ipairs(player.Character:GetChildren()) do
-                    if part:IsA("BasePart") then
+local function enableInstantHitbox()
+    HitboxCaster.HitStart = function(self, duration)
+        oldHitStart(self, duration)
 
-                        if not originalStates[player][part.Name] then
-                            originalStates[player][part.Name] = {
-                                Size = part.Size,
-                                CanCollide = part.CanCollide,
-                                CanTouch = part.CanTouch,
-                                Transparency = part.Transparency,
-                                Color = part.Color
-                            }
-                        end
+        task.defer(function()
+            if self.HitboxActive and self.OnHit then
+                local localChar = LocalPlayer.Character
+                if not localChar or not localChar:FindFirstChild("HumanoidRootPart") then return end
+                local hrp = localChar.HumanoidRootPart
 
-                        if part.Name == "Head" then
-                            part.CanCollide = true
-                            part.CanTouch = true
-                        else
-                            part.CanCollide = false
-                            part.CanTouch = false
-                        end
+                local closestTarget, closestHum, closestHead
+                local shortestDist = math.huge
 
-                        if part.Name == "HumanoidRootPart" then
-                            part.Size = Vector3.new(6, 6, 6)
-                            part.Transparency = 0.9
-                            part.Color = Color3.fromRGB(255, 255, 255)
+                for _, target in ipairs(workspace:GetDescendants()) do
+                    if target:IsA("Model") and target:FindFirstChildOfClass("Humanoid") and target ~= localChar then
+                        local hum = target:FindFirstChildOfClass("Humanoid")
+                        local head = target:FindFirstChild("Head")
+                        if hum and head then
+                            local distance = (head.Position - hrp.Position).Magnitude
+                            if distance <= maxDistance and distance < shortestDist then
+                                closestTarget = target
+                                closestHum = hum
+                                closestHead = head
+                                shortestDist = distance
+                            end
                         end
                     end
                 end
-            end)
-        end
-    end
-end
 
-local function restoreHitboxes()
-    for player, parts in pairs(originalStates) do
-        if player.Character then
-            for partName, data in pairs(parts) do
-                local part = player.Character:FindFirstChild(partName)
-                if part then
-                    part.Size = data.Size
-                    part.CanCollide = data.CanCollide
-                    part.CanTouch = data.CanTouch
-                    part.Transparency = data.Transparency
-                    part.Color = data.Color
+                if closestTarget and closestHum and closestHead then
+                    self.OnHit:Fire(closestHead, closestHum, {
+                        Instance = closestHead,
+                        Position = closestHead.Position,
+                        Normal = Vector3.new(0, 1, 0)
+                    }, "InstantGroup")
                 end
             end
-        end
+        end)
     end
-    originalStates = {}
 end
 
-createButton("Expand Hitboxes", 0.02, function(active)
+local function disableInstantHitbox()
+    HitboxCaster.HitStart = oldHitStart
+end
+
+createButton("Instant Hitbox", 0.02, function(active)
     if active then
-        expandHitboxesConnection = RunService.Heartbeat:Connect(expandAllPlayerHitboxes)
+        enableInstantHitbox()
     else
-        if expandHitboxesConnection then
-            expandHitboxesConnection:Disconnect()
-            expandHitboxesConnection = nil
-        end
-        restoreHitboxes()
+        disableInstantHitbox()
     end
 end)
 
