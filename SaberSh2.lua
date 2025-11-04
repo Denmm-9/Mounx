@@ -54,52 +54,57 @@ end
 
 -- Instant Hitbox
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
 
 local RaycastHitbox = require(game:GetService("ReplicatedStorage").LightsaberModules.RaycastHitbox)
 local HitboxCaster = require(game:GetService("ReplicatedStorage").LightsaberModules.RaycastHitbox.HitboxCaster)
 
 local oldHitStart = HitboxCaster.HitStart
-local instantHitConnection
-local maxDistance = 11
+local MAX_DISTANCE = 11 
 
 local function enableInstantHitbox()
     HitboxCaster.HitStart = function(self, duration)
-        oldHitStart(self, duration)
+        pcall(function()
+            oldHitStart(self, duration)
+        end)
 
         task.defer(function()
-            if self.HitboxActive and self.OnHit then
-                local localChar = LocalPlayer.Character
-                if not localChar or not localChar:FindFirstChild("HumanoidRootPart") then return end
-                local hrp = localChar.HumanoidRootPart
+            if not (self.HitboxActive and self.OnHit) then return end
 
-                local closestTarget, closestHum, closestHead
-                local shortestDist = math.huge
+            local localChar = LocalPlayer.Character
+            if not localChar then return end
+            local hrp = localChar:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
 
-                for _, target in ipairs(workspace:GetDescendants()) do
-                    if target:IsA("Model") and target:FindFirstChildOfClass("Humanoid") and target ~= localChar then
-                        local hum = target:FindFirstChildOfClass("Humanoid")
-                        local head = target:FindFirstChild("Head")
-                        if hum and head then
-                            local distance = (head.Position - hrp.Position).Magnitude
-                            if distance <= maxDistance and distance < shortestDist then
-                                closestTarget = target
-                                closestHum = hum
-                                closestHead = head
-                                shortestDist = distance
-                            end
+            local closestHum, closestHead, shortestDist = nil, nil, math.huge
+
+            for _, model in ipairs(Workspace:GetDescendants()) do
+                if model:IsA("Model") and model ~= localChar then
+                    local hum = model:FindFirstChildOfClass("Humanoid")
+                    local head = model:FindFirstChild("Head")
+                    if hum and head and hum.Health > 0 then
+                        local dist = (hrp.Position - head.Position).Magnitude
+                        if dist <= MAX_DISTANCE and dist < shortestDist then
+                            shortestDist = dist
+                            closestHum = hum
+                            closestHead = head
                         end
                     end
                 end
+            end
 
-                if closestTarget and closestHum and closestHead then
-                    self.OnHit:Fire(closestHead, closestHum, {
+            if closestHum and closestHead then
+                self.OnHit:Fire(
+                    closestHead,
+                    closestHum,
+                    {
                         Instance = closestHead,
                         Position = closestHead.Position,
                         Normal = Vector3.new(0, 1, 0)
-                    }, "InstantGroup")
-                end
+                    },
+                    "InstantGroup"
+                )
             end
         end)
     end
@@ -116,6 +121,7 @@ createButton("Instant Hitbox", 0.02, function(active)
         disableInstantHitbox()
     end
 end)
+
 
 -- AntiSlap 
 local SlappedModule = require(ReplicatedStorage:WaitForChild("LightsaberModules"):WaitForChild("SharedBehavior"):WaitForChild("Slapped"))
