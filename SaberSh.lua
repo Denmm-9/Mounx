@@ -52,94 +52,187 @@ local function createButton(name, position, onClickFunction)
     end)
 end
 
--- Expand Hitboxes
-local originalStates = {}
-local expandHitboxesConnection
+-- Instant Hitbox V5 Dueltag
+local DuelModule = require(ReplicatedStorage.LightsaberModules.SharedBehavior.DuelRequest)
+local HitboxCaster = require(ReplicatedStorage.LightsaberModules.RaycastHitbox.HitboxCaster)
 
-local whitelist = {
-    "TheFox7u7",
-    "PaginasDoDaqri"
-}
+-- Duel Handler
+local DuelTarget, duelConnTarget, duelConnLocal
+local oldBeginDuel = DuelModule.BeginDuel
 
-local function isWhitelisted(player)
-    for _, name in ipairs(whitelist) do
-        if player.Name == name then
-            return true
-        end
-    end
-    return false
+local function clear()
+	if duelConnTarget then duelConnTarget:Disconnect() end
+	DuelTarget, duelConnTarget = nil, nil
 end
 
-local function expandAllPlayerHitboxes()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and not isWhitelisted(player) and player.Character then
-            pcall(function()
-                local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    if not originalStates[player] then originalStates[player] = {} end
-                    if not originalStates[player].hrp then
-                        originalStates[player].hrp = {
-                            Size = hrp.Size,
-                            CanCollide = hrp.CanCollide,
-                            CanTouch = hrp.CanTouch,
-                            Transparency = hrp.Transparency,
-                            Color = hrp.Color
-                        }
-                    end
-                    hrp.Size = Vector3.new(10,10,10)
-                    hrp.CanCollide = false
-                    hrp.CanTouch = false
-                    hrp.Transparency = 0.9
-                    hrp.Color = Color3.fromRGB(255,255,255)
-                end
-
-                local collisionPart = player.Character:FindFirstChild("CollisionPart")
-                if collisionPart then
-                    if not originalStates[player].collisionPart then
-                        originalStates[player].collisionPart = {
-                            CanCollide = collisionPart.CanCollide,
-                            CanTouch = collisionPart.CanTouch
-                        }
-                    end
-                    collisionPart.CanCollide = false
-                    collisionPart.CanTouch = false
-                end
-            end)
-        end
-    end
+local function watchDeath(humanoid, cb)
+	if not humanoid then return end
+	local c; c = humanoid.Died:Connect(function()
+		cb()
+		c:Disconnect()
+	end)
+	return c
 end
 
-local function restoreHitboxes()
-    for player, states in pairs(originalStates) do
-        if player.Character then
-            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-            if hrp and states.hrp then
-                hrp.Size = states.hrp.Size
-                hrp.CanCollide = states.hrp.CanCollide
-                hrp.CanTouch = states.hrp.CanTouch
-                hrp.Transparency = states.hrp.Transparency
-                hrp.Color = states.hrp.Color
-            end
-            local collisionPart = player.Character:FindFirstChild("CollisionPart")
-            if collisionPart and states.collisionPart then
-                collisionPart.CanCollide = states.collisionPart.CanCollide
-                collisionPart.CanTouch = states.collisionPart.CanTouch
-            end
-        end
-    end
-    originalStates = {}
+local function watchLocal()
+	if duelConnLocal then duelConnLocal:Disconnect() end
+	local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+	if hum then duelConnLocal = watchDeath(hum, function() clear() end) end
 end
 
-createButton("Expand Hitboxes", 0.1, function(active)
-    if active then
-        expandHitboxesConnection = RunService.Heartbeat:Connect(expandAllPlayerHitboxes)
-    else
-        if expandHitboxesConnection then
-            expandHitboxesConnection:Disconnect()
-            expandHitboxesConnection = nil
-        end
-        restoreHitboxes()
-    end
+LocalPlayer.CharacterAdded:Connect(function() task.wait(0.05); watchLocal() end)
+watchLocal()
+
+DuelModule.BeginDuel = function(self, opponent)
+	local ok,res = pcall(function() return oldBeginDuel(self, opponent) end)
+
+	task.defer(function()
+		local plr = opponent and Players:GetPlayerFromCharacter(opponent)
+		if not plr then return end
+
+		clear()
+		DuelTarget = plr
+
+		local hum = opponent:FindFirstChildOfClass("Humanoid")
+		if hum then duelConnTarget = watchDeath(hum, function() clear() end) end
+	end)
+
+	return ok and res
+end
+
+-- Config
+local MAX_DISTANCE = 10
+local SCAN_INTERVAL = 0.10
+local running = false
+local playersCache = {}
+local oldHitStart = HitboxCaster.HitStart
+
+task.spawn(function()
+	while true do
+		if running then
+			local list = {}
+			for _,plr in ipairs(Players:GetPlayers()) do
+				if plr ~= LocalPlayer then
+					local char = plr.Character
+					local hum = char and char:FindFirstChildOfClass("Humanoid")
+					local head = char and char:FindFirstChild("Head")
+					if hum and head and hum.Health > 0 then
+						list[#list+1] = {hum=hum, head=head, char=char, player=plr}
+					end
+				end
+			end
+			playersCache = list
+		end
+		task.wait(SCAN_INTERVAL)
+	end
+end)
+
+local solversFolder = ReplicatedStorage.LightsaberModules.RaycastHitbox:FindFirstChild("Solvers")
+local function instantScan(hitbox)
+	if not (hitbox and hitbox.HitboxActive and solversFolder) then return end
+	for _,point in ipairs(hitbox.HitboxRaycastPoints or {}) do
+		if not hitbox.HitboxActive then break end
+
+		local castMode = point.CastMode
+		local modeName
+		for n,id in pairs(hitbox.CastModes or {}) do
+			if id == castMode then modeName = n; break end
+		end
+		if not modeName then continue end
+
+		local solver = solversFolder:FindFirstChild(modeName)
+		if not solver then continue end
+		solver = require(solver)
+
+		local ok,origin,dir = pcall(function() return solver.Solve(point) end)
+		if not (ok and origin and dir) then continue end
+
+		local ray = Workspace:Raycast(origin, dir, hitbox.RaycastParams)
+		if not ray then
+			pcall(function() point.LastPosition = solver.UpdateToNextPosition(point) end)
+			continue
+		end
+
+		local inst = ray.Instance
+		local model = inst and inst:FindFirstAncestorOfClass("Model")
+		local hum = model and model:FindFirstChildOfClass("Humanoid")
+		if hum and not hitbox.HitboxHitList[hum] then
+			hitbox.HitboxHitList[hum] = true
+			pcall(function() point.LastPosition = solver.UpdateToNextPosition(point) end)
+			pcall(function() hitbox.OnHit:Fire(inst, hum, ray, point.Group) end)
+		end
+	end
+end
+
+-- Duel + Nearest
+local function getTarget(hrp)
+
+	if DuelTarget and DuelTarget.Character then
+		local head = DuelTarget.Character:FindFirstChild("Head")
+		local hum = DuelTarget.Character:FindFirstChildOfClass("Humanoid")
+		if head and hum and hum.Health > 0 then
+			local dist = (hrp.Position - head.Position).Magnitude
+			if dist <= MAX_DISTANCE then
+				return {head=head, hum=hum, char=DuelTarget.Character, player=DuelTarget}
+			end
+		end
+	end
+
+	-- fallback nearest
+	local best, d = nil, math.huge
+	for _,e in ipairs(playersCache) do
+		local dist = (hrp.Position - e.head.Position).Magnitude
+		if dist <= MAX_DISTANCE and dist < d then
+			best, d = e, dist
+		end
+	end
+
+	return best
+end
+
+-- Hook
+local function enable()
+	if running then return end
+	running = true
+
+	HitboxCaster.HitStart = function(self, duration)
+		pcall(function() oldHitStart(self, duration) end)
+
+		task.defer(function()
+			if self and self.HitboxActive then
+				instantScan(self)
+			end
+		end)
+
+		task.defer(function()
+			local char = LocalPlayer.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+			if not hrp then return end
+
+			local enemy = getTarget(hrp)
+			if not enemy then return end
+
+			self.OnHit:Fire(
+				enemy.head,
+				enemy.hum,
+				{
+					Instance = enemy.head,
+					Position = enemy.head.Position,
+					Normal = Vector3.new(0,1,0)
+				},
+				"InstantHit"
+			)
+		end)
+	end
+end
+
+local function disable()
+	running = false
+	HitboxCaster.HitStart = oldHitStart
+end
+
+createButton("Instant Hitbox V2", 0.1, function(active)
+	if active then enable() else disable() end
 end)
 
 -- AntiSlap 
@@ -229,114 +322,197 @@ createButton("Max Combo", 0.5, function(active)
     end
 end)
 
-
 -- PerfectBlock
-local perfectBlockConnection
-local blockRange = 15
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local LocalPlayer = Players.LocalPlayer
+local UpdateBlockDirection = ReplicatedStorage.LightsaberRemotes.UpdateBlockDirection
+
+local DuelModule = require(ReplicatedStorage.LightsaberModules.SharedBehavior.DuelRequest)
+
+-- DuelTag
+local DuelTarget
+local duelConnTarget, duelConnLocal
+local oldBeginDuel = DuelModule.BeginDuel
+
+local function clearDuel()
+	if duelConnTarget then duelConnTarget:Disconnect() end
+	DuelTarget, duelConnTarget = nil, nil
+end
+
+local function watchDeath(hum, cb)
+	if not hum then return end
+	local c
+	c = hum.Died:Connect(function()
+		c:Disconnect()
+		cb()
+	end)
+	return c
+end
+
+local function watchLocal()
+	if duelConnLocal then duelConnLocal:Disconnect() end
+	local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+	if hum then duelConnLocal = watchDeath(hum, function() clearDuel() end) end
+end
+
+LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(0.05)
+	watchLocal()
+end)
+watchLocal()
+
+DuelModule.BeginDuel = function(self, opponent)
+	local ok,res = pcall(function()
+		return oldBeginDuel(self, opponent)
+	end)
+
+	task.defer(function()
+		local plr = opponent and Players:GetPlayerFromCharacter(opponent)
+		if not plr then return end
+
+		clearDuel()
+		DuelTarget = plr
+
+		local hum = opponent:FindFirstChildOfClass("Humanoid")
+		if hum then duelConnTarget = watchDeath(hum, function() clearDuel() end) end
+	end)
+
+	return ok and res
+end
+
+-- Anims
 local animations = {
-    [12625853257] = {8, 7, 6}, [12718500875] = {8, 7, 6}, [13569308951] = {8, 7, 6},
-    [12734283312] = {8, 7, 6}, [13453385141] = {8, 7, 6}, [14167502905] = {8, 7, 6},
-    [15563346027] = {8, 7, 6}, [17372038496] = {8, 7, 6}, [13306517941] = {8, 7, 6},
-    [13781663786] = {8, 7, 6}, [13540431378] = {8, 7, 6}, [12734467243] = {8, 7, 6},
-    [14329161930] = {8, 7, 6},
+    [12625853257]={8,7,6},[12718500875]={8,7,6},[13569308951]={8,7,6},
+    [12734283312]={8,7,6},[13453385141]={8,7,6},[14167502905]={8,7,6},
+    [15563346027]={8,7,6},[17372038496]={8,7,6},[13306517941]={8,7,6},
+    [13781663786]={8,7,6},[13540431378]={8,7,6},[12734467243]={8,7,6},
+    [14329161930]={8,7,6},
 
-    [12625843823] = {8, 9, 10}, [12718483984] = {8, 9, 10}, [13568360345] = {8, 9, 10},
-    [12734279804] = {8, 9, 10}, [13453387454] = {8, 9, 10}, [14167592684] = {8, 9, 10},
-    [15563342470] = {8, 9, 10}, [17372037456] = {8, 9, 10}, [13304777249] = {8, 9, 10},
-    [13781621647] = {8, 9, 10}, [13540933153] = {8, 9, 10}, [12734465074] = {8, 9, 10},
-    [14355055371] = {8, 9, 10},
+    [12625843823]={8,9,10},[12718483984]={8,9,10},[13568360345]={8,9,10},
+    [12734279804]={8,9,10},[13453387454]={8,9,10},[14167592684]={8,9,10},
+    [15563342470]={8,9,10},[17372037456]={8,9,10},[13304777249]={8,9,10},
+    [13781621647]={8,9,10},[13540933153]={8,9,10},[12734465074]={8,9,10},
+    [14355055371]={8,9,10},
 
-    [12625846167] = {11, 10}, [12718486016] = {11, 10}, [13568907848] = {11, 10},
-    [12734282359] = {11, 10}, [13453382299] = {11, 10}, [14167590501] = {11, 10},
-    [15564066873] = {11, 10}, [17372036678] = {11, 10}, [13304786458] = {11, 10},
-    [13781667793] = {11, 10}, [13540923116] = {11, 10}, [12734466257] = {11, 10},
-    [14329310837] = {11, 10},
+    [12625846167]={11,10},[12718486016]={11,10},[13568907848]={11,10},
+    [12734282359]={11,10},[13453382299]={11,10},[14167590501]={11,10},
+    [15564066873]={11,10},[17372036678]={11,10},[13304786458]={11,10},
+    [13781667793]={11,10},[13540923116]={11,10},[12734466257]={11,10},
+    [14329310837]={11,10},
 
-    [12625841878] = {6, 5, 4}, [12718501806] = {6, 5, 4}, [13569466383] = {6, 5, 4},
-    [12734284724] = {6, 5, 4}, [13453390619] = {6, 5, 4}, [14167591876] = {6, 5, 4},
-    [15563343960] = {6, 5, 4}, [17372039079] = {6, 5, 4}, [13306520673] = {6, 5, 4},
-    [13783497920] = {6, 5, 4}, [12734468200] = {6, 5, 4}, [14329312618] = {6, 5, 4},
+    [12625841878]={6,5,4},[12718501806]={6,5,4},[13569466383]={6,5,4},
+    [12734284724]={6,5,4},[13453390619]={6,5,4},[14167591876]={6,5,4},
+    [15563343960]={6,5,4},[17372039079]={6,5,4},[13306520673]={6,5,4},
+    [13783497920]={6,5,4},[12734468200]={6,5,4},[14329312618]={6,5,4},
 
-    [12625848489] = {3, 2, 4}, [12718504431] = {3, 2, 4}, [13565725049] = {3, 2, 4},
-    [12734288411] = {3, 2, 4}, [13453386109] = {3, 2, 4}, [14167584256] = {3, 2, 4},
-    [15563344914] = {3, 2, 4}, [17566657634] = {3, 2, 4}, [13304781510] = {3, 2, 4},
-    [13783395464] = {3, 2, 4}, [13540430226] = {3, 2, 4}, [12734471179] = {3, 2, 4},
-    [14329308611] = {3, 2, 4},
+    [12625848489]={3,2,4},[12718504431]={3,2,4},[13565725049]={3,2,4},
+    [12734288411]={3,2,4},[13453386109]={3,2,4},[14167584256]={3,2,4},
+    [15563344914]={3,2,4},[17566657634]={3,2,4},[13304781510]={3,2,4},
+    [13783395464]={3,2,4},[13540430226]={3,2,4},[12734471179]={3,2,4},
+    [14329308611]={3,2,4},
 
-    [12625839385] = {1, 2, 13}, [12718502938] = {1, 2, 13}, [13564880014] = {1, 2, 13},
-    [12734285787] = {1, 2, 13}, [13453391958] = {1, 2, 13}, [14167593691] = {1, 2, 13},
-    [15563343338] = {1, 2, 13}, [17372041039] = {1, 2, 13}, [13304774028] = {1, 2, 13},
-    [13783202348] = {1, 2, 13}, [13540434005] = {1, 2, 13}, [12734468945] = {1, 2, 13},
-    [14329314419] = {1, 2, 13},
+    [12625839385]={1,2,13},[12718502938]={1,2,13},[13564880014]={1,2,13},
+    [12734285787]={1,2,13},[13453391958]={1,2,13},[14167593691]={1,2,13},
+    [15563343338]={1,2,13},[17372041039]={1,2,13},[13304774028]={1,2,13},
+    [13783202348]={1,2,13},[13540434005]={1,2,13},[12734468945]={1,2,13},
+    [14329314419]={1,2,13},
 
-    [12625851115] = {12, 13}, [12718503706] = {12, 13}, [13566518265] = {12, 13},
-    [12734286808] = {12, 13}, [13453383921] = {12, 13}, [14167585544] = {12, 13},
-    [15563346564] = {12, 13}, [17566667400] = {12, 13}, [13304788013] = {12, 13},
-    [13783293417] = {12, 13}, [13540433400] = {12, 13}, [12734470075] = {12, 13},
-    [14329160019] = {12, 13},
+    [12625851115]={12,13},[12718503706]={12,13},[13566518265]={12,13},
+    [12734286808]={12,13},[13453383921]={12,13},[14167585544]={12,13},
+    [15563346564]={12,13},[17566667400]={12,13},[13304788013]={12,13},
+    [13783293417]={12,13},[13540433400]={12,13},[12734470075]={12,13},
+    [14329160019]={12,13},
 }
 
-local function getEnemiesInRange()
-    local enemies = {}
-    local myChar = LocalPlayer.Character
-    if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return enemies end
-    local myPos = myChar.HumanoidRootPart.Position
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (player.Character.HumanoidRootPart.Position - myPos).Magnitude
-            if dist <= blockRange then
-                table.insert(enemies, player.Character)
-            end
-        end
-    end
-    return enemies
+-- getDir
+local function getDirectionsFromAnimations(hum)
+	local dirSet = {}
+	for _, track in ipairs(hum:GetPlayingAnimationTracks()) do
+		if track.IsPlaying then
+			local id = tonumber(track.Animation.AnimationId:match("%d+"))
+			if animations[id] then
+				for _,d in ipairs(animations[id]) do
+					dirSet[d] = true
+				end
+			end
+		end
+	end
+
+	local result = {}
+	for d in pairs(dirSet) do
+		table.insert(result, d)
+	end
+	return result
 end
 
-local function getDirectionsFromAnimations(humanoid)
-    local directionsSet = {}
-    for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
-        if track.IsPlaying then
-            local animIdStr = track.Animation.AnimationId
-            local animId = tonumber(animIdStr:match("%d+"))
-            if animations[animId] then
-                for _, dir in ipairs(animations[animId]) do
-                    directionsSet[dir] = true
-                end
-            end
-        end
-    end
-    local directions = {}
-    for dir in pairs(directionsSet) do
-        table.insert(directions, dir)
-    end
-    return directions
+local blockRange = 15
+
+local function getTarget()
+	local myChar = LocalPlayer.Character
+	if not myChar then return nil end
+	local root = myChar:FindFirstChild("HumanoidRootPart")
+	if not root then return nil end
+
+	-- prioridad: DuelTarget
+	if DuelTarget and DuelTarget.Character then
+		local char = DuelTarget.Character
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		local root2 = char:FindFirstChild("HumanoidRootPart")
+		if hum and root2 and hum.Health > 0 then
+			local dist = (root2.Position - root.Position).Magnitude
+			if dist <= blockRange then
+				return char
+			end
+		end
+	end
+
+	-- fallback nearest
+	local best, d = nil, math.huge
+	for _,plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and plr.Character then
+			local char = plr.Character
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			local r = char:FindFirstChild("HumanoidRootPart")
+			if hum and r and hum.Health > 0 then
+				local dist = (r.Position - root.Position).Magnitude
+				if dist <= blockRange and dist < d then
+					best, d = char, dist
+				end
+			end
+		end
+	end
+
+	return best
 end
+
+local perfectBlockConnection
 
 createButton("PerfectBlock", 0.7, function(active)
-    if active then
-        perfectBlockConnection = RunService.Heartbeat:Connect(function()
-            local enemies = getEnemiesInRange()
-            local myChar = LocalPlayer.Character
-            if not myChar then return end
+	if active then
+		perfectBlockConnection = RunService.Heartbeat:Connect(function()
+			local enemy = getTarget()
+			if not enemy then return end
 
-            for _, enemyChar in ipairs(enemies) do
-                local humanoid = enemyChar:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    local directions = getDirectionsFromAnimations(humanoid)
-                    if #directions > 0 then
-                        for _, dir in ipairs(directions) do
-                            UpdateBlockDirection:FireServer(dir)
-                        end
-                        task.wait(0.005)
-                    end
-                end
-            end
-        end)
-    else
-        if perfectBlockConnection then
-            perfectBlockConnection:Disconnect()
-            perfectBlockConnection = nil
-        end
-    end
+			local hum = enemy:FindFirstChildOfClass("Humanoid")
+			if not hum then return end
+
+			local dirs = getDirectionsFromAnimations(hum)
+			if #dirs == 0 then return end
+
+			for _,dir in ipairs(dirs) do
+				UpdateBlockDirection:FireServer(dir)
+			end
+
+			task.wait(0.004)
+		end)
+
+	else
+		if perfectBlockConnection then
+			perfectBlockConnection:Disconnect()
+			perfectBlockConnection = nil
+		end
+	end
 end)
