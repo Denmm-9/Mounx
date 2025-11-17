@@ -55,8 +55,6 @@ end
 -- Instant Hitbox V5 Dueltag
 local DuelModule = require(ReplicatedStorage.LightsaberModules.SharedBehavior.DuelRequest)
 local HitboxCaster = require(ReplicatedStorage.LightsaberModules.RaycastHitbox.HitboxCaster)
-
--- Duel Handler
 local DuelTarget, duelConnTarget, duelConnLocal
 local oldBeginDuel = DuelModule.BeginDuel
 
