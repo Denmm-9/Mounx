@@ -99,7 +99,7 @@ DuelModule.BeginDuel = function(self, opponent)
 end
 
 -- Config
-local MAX_DISTANCE = 10
+local MAX_DISTANCE = 11
 local SCAN_INTERVAL = 0.1
 local running = false
 local playersCache = {}
