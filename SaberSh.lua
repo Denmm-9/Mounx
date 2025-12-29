@@ -52,185 +52,195 @@ local function createButton(name, position, onClickFunction)
     end)
 end
 
--- Instant Hitbox V5 Dueltag
+-- Instant Hitbox V6 OP (Insta-Hit Server-Priority)
+-- Services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- Modules
 local DuelModule = require(ReplicatedStorage.LightsaberModules.SharedBehavior.DuelRequest)
 local HitboxCaster = require(ReplicatedStorage.LightsaberModules.RaycastHitbox.HitboxCaster)
-local DuelTarget, duelConnTarget, duelConnLocal
-local oldBeginDuel = DuelModule.BeginDuel
 
-local function clear()
-	if duelConnTarget then duelConnTarget:Disconnect() end
-	DuelTarget, duelConnTarget = nil, nil
-end
-
-local function watchDeath(humanoid, cb)
-	if not humanoid then return end
-	local c; c = humanoid.Died:Connect(function()
-		cb()
-		c:Disconnect()
-	end)
-	return c
-end
-
-local function watchLocal()
-	if duelConnLocal then duelConnLocal:Disconnect() end
-	local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-	if hum then duelConnLocal = watchDeath(hum, function() clear() end) end
-end
-
-LocalPlayer.CharacterAdded:Connect(function() task.wait(0.05); watchLocal() end)
-watchLocal()
-
-DuelModule.BeginDuel = function(self, opponent)
-	local ok,res = pcall(function() return oldBeginDuel(self, opponent) end)
-
-	task.defer(function()
-		local plr = opponent and Players:GetPlayerFromCharacter(opponent)
-		if not plr then return end
-
-		clear()
-		DuelTarget = plr
-
-		local hum = opponent:FindFirstChildOfClass("Humanoid")
-		if hum then duelConnTarget = watchDeath(hum, function() clear() end) end
-	end)
-
-	return ok and res
-end
-
+----------------------------------------------------------------
 -- Config
-local MAX_DISTANCE = 11
-local SCAN_INTERVAL = 0.1
+----------------------------------------------------------------
+local MAX_DISTANCE = 9
+local SCAN_INTERVAL = 0.01
+local HIT_COOLDOWN = 0 
+local lastHit = 0
 local running = false
 local playersCache = {}
 local oldHitStart = HitboxCaster.HitStart
 
+-- Detection Methods (solo cambiar nombre aquí)
+local DetectionMethods = {
+    ["UpperTorso"] = "UpperTorso",
+    ["Head"] = "Head",
+    ["RandomTorsoHead"] = "RandomTorsoHead"
+}
+local CurrentDetection = DetectionMethods.UpperTorso -- variable fácil de cambiar
+
+----------------------------------------------------------------
+-- Player Cache (actualiza justo antes de atacar)
+----------------------------------------------------------------
+local function updatePlayersCache()
+    local list = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local char = plr.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local head = char and char:FindFirstChild("Head")
+            if hum and head and hum.Health > 0 then
+                list[#list+1] = {player=plr, char=char, hum=hum, head=head}
+            end
+        end
+    end
+    playersCache = list
+end
+
 task.spawn(function()
-	while true do
-		if running then
-			local list = {}
-			for _,plr in ipairs(Players:GetPlayers()) do
-				if plr ~= LocalPlayer then
-					local char = plr.Character
-					local hum = char and char:FindFirstChildOfClass("Humanoid")
-					local head = char and char:FindFirstChild("Head")
-					if hum and head and hum.Health > 0 then
-						list[#list+1] = {hum=hum, head=head, char=char, player=plr}
-					end
-				end
-			end
-			playersCache = list
-		end
-		task.wait(SCAN_INTERVAL)
-	end
+    while true do
+        if running then updatePlayersCache() end
+        task.wait(SCAN_INTERVAL)
+    end
 end)
 
-local solversFolder = ReplicatedStorage.LightsaberModules.RaycastHitbox:FindFirstChild("Solvers")
-local function instantScan(hitbox)
-	if not (hitbox and hitbox.HitboxActive and solversFolder) then return end
-	for _,point in ipairs(hitbox.HitboxRaycastPoints or {}) do
-		if not hitbox.HitboxActive then break end
+----------------------------------------------------------------
+-- Duel Handler
+----------------------------------------------------------------
+local DuelTarget, duelConnTarget, duelConnLocal
+local oldBeginDuel = DuelModule.BeginDuel
 
-		local castMode = point.CastMode
-		local modeName
-		for n,id in pairs(hitbox.CastModes or {}) do
-			if id == castMode then modeName = n; break end
-		end
-		if not modeName then continue end
-
-		local solver = solversFolder:FindFirstChild(modeName)
-		if not solver then continue end
-		solver = require(solver)
-
-		local ok,origin,dir = pcall(function() return solver.Solve(point) end)
-		if not (ok and origin and dir) then continue end
-
-		local ray = Workspace:Raycast(origin, dir, hitbox.RaycastParams)
-		if not ray then
-			pcall(function() point.LastPosition = solver.UpdateToNextPosition(point) end)
-			continue
-		end
-
-		local inst = ray.Instance
-		local model = inst and inst:FindFirstAncestorOfClass("Model")
-		local hum = model and model:FindFirstChildOfClass("Humanoid")
-		if hum and not hitbox.HitboxHitList[hum] then
-			hitbox.HitboxHitList[hum] = true
-			pcall(function() point.LastPosition = solver.UpdateToNextPosition(point) end)
-			pcall(function() hitbox.OnHit:Fire(inst, hum, ray, point.Group) end)
-		end
-	end
+local function clear()
+    if duelConnTarget then duelConnTarget:Disconnect() end
+    DuelTarget, duelConnTarget = nil, nil
 end
 
--- Duel + Nearest
+local function watchDeath(humanoid, cb)
+    if not humanoid then return end
+    local c; c = humanoid.Died:Connect(function()
+        cb()
+        c:Disconnect()
+    end)
+    return c
+end
+
+local function watchLocal()
+    if duelConnLocal then duelConnLocal:Disconnect() end
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then duelConnLocal = watchDeath(hum, clear) end
+end
+
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(0.05)
+    watchLocal()
+end)
+watchLocal()
+
+DuelModule.BeginDuel = function(self, opponent)
+    local ok,res = pcall(function() return oldBeginDuel(self,opponent) end)
+    task.defer(function()
+        local plr = opponent and Players:GetPlayerFromCharacter(opponent)
+        if not plr then return end
+        clear()
+        DuelTarget = plr
+        local hum = opponent:FindFirstChildOfClass("Humanoid")
+        if hum then duelConnTarget = watchDeath(hum, clear) end
+    end)
+    return ok and res
+end
+
+----------------------------------------------------------------
+-- Wallcheck
+----------------------------------------------------------------
+local function canHit(fromPos, targetPart, ignore)
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+    params.FilterDescendantsInstances = ignore or {}
+    local ray = Workspace:Raycast(fromPos, targetPart.Position-fromPos, params)
+    return ray and ray.Instance and ray.Instance:IsDescendantOf(targetPart.Parent)
+end
+
+----------------------------------------------------------------
+-- Target Selection
+----------------------------------------------------------------
 local function getTarget(hrp)
-
-	if DuelTarget and DuelTarget.Character then
-		local head = DuelTarget.Character:FindFirstChild("Head")
-		local hum = DuelTarget.Character:FindFirstChildOfClass("Humanoid")
-		if head and hum and hum.Health > 0 then
-			local dist = (hrp.Position - head.Position).Magnitude
-			if dist <= MAX_DISTANCE then
-				return {head=head, hum=hum, char=DuelTarget.Character, player=DuelTarget}
-			end
-		end
-	end
-
-	-- fallback nearest
-	local best, d = nil, math.huge
-	for _,e in ipairs(playersCache) do
-		local dist = (hrp.Position - e.head.Position).Magnitude
-		if dist <= MAX_DISTANCE and dist < d then
-			best, d = e, dist
-		end
-	end
-
-	return best
+    if DuelTarget and DuelTarget.Character then
+        local char = DuelTarget.Character
+        local head = char:FindFirstChild("Head")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if head and hum and hum.Health > 0 then
+            if (hrp.Position-head.Position).Magnitude <= MAX_DISTANCE then
+                return {player=DuelTarget,char=char,head=head,hum=hum}
+            end
+        end
+    end
+    local best,dist=nil,math.huge
+    for _,e in ipairs(playersCache) do
+        local d=(hrp.Position-e.head.Position).Magnitude
+        if d<=MAX_DISTANCE and d<dist then best,dist=e,d end
+    end
+    return best
 end
 
--- Hook
+----------------------------------------------------------------
+-- Hook OP Insta-Hit
+----------------------------------------------------------------
 local function enable()
-	if running then return end
-	running = true
+    if running then return end
+    running=true
 
-	HitboxCaster.HitStart = function(self, duration)
-		pcall(function() oldHitStart(self, duration) end)
+    HitboxCaster.HitStart=function(self,duration)
+        pcall(function() oldHitStart(self,duration) end)
 
-		task.defer(function()
-			if self and self.HitboxActive then
-				instantScan(self)
-			end
-		end)
+        task.defer(function()
+            local char=LocalPlayer.Character
+            local hrp=char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
 
-		task.defer(function()
-			local char = LocalPlayer.Character
-			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-			if not hrp then return end
+            if tick()-lastHit<HIT_COOLDOWN then return end
+            updatePlayersCache()
 
-			local enemy = getTarget(hrp)
-			if not enemy then return end
+            local enemy=getTarget(hrp)
+            if not enemy then return end
 
-			self.OnHit:Fire(
-				enemy.head,
-				enemy.hum,
-				{
-					Instance = enemy.head,
-					Position = enemy.head.Position,
-					Normal = Vector3.new(0,1,0)
-				},
-				"InstantHit"
-			)
-		end)
-	end
+            -- Determinar hitPart según DetectionMethod
+            local hitPart
+            if CurrentDetection=="UpperTorso" then
+                hitPart=enemy.char:FindFirstChild("UpperTorso") or enemy.head
+            elseif CurrentDetection=="Head" then
+                hitPart=enemy.head
+            elseif CurrentDetection=="RandomTorsoHead" then
+                hitPart=(math.random()<0.5 and enemy.char:FindFirstChild("UpperTorso") or enemy.head)
+            end
+            if not hitPart then return end
+            if not canHit(hrp.Position,hitPart,{char}) then return end
+
+            lastHit=tick()
+            self.OnHit:Fire(
+                hitPart,
+                enemy.hum,
+                {Instance=hitPart,Position=hitPart.Position,Normal=Vector3.new(0,1,0)},
+                "InstantHit"
+            )
+        end)
+    end
 end
 
 local function disable()
-	running = false
-	HitboxCaster.HitStart = oldHitStart
+    running=false
+    HitboxCaster.HitStart=oldHitStart
 end
 
-createButton("Instant Hitbox V2", 0.1, function(active)
-	if active then enable() else disable() end
+----------------------------------------------------------------
+-- UI
+----------------------------------------------------------------
+createButton("Instant Hitbox V6",0.1,function(active)
+    if active then enable() else disable() end
 end)
 
 -- AntiSlap 
