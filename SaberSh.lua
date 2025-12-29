@@ -68,7 +68,7 @@ local HitboxCaster = require(ReplicatedStorage.LightsaberModules.RaycastHitbox.H
 ----------------------------------------------------------------
 -- Config
 ----------------------------------------------------------------
-local MAX_DISTANCE = 7
+local MAX_DISTANCE = 8
 local SCAN_INTERVAL = 0.01
 local HIT_COOLDOWN = 0 
 local lastHit = 0
