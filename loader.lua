@@ -1,24 +1,106 @@
 repeat task.wait(0.1) until game:IsLoaded()
 
 -- ═══════════════════════════════════════════════════════════════
--- CONFIGURACIÓN - TU URL Y API SECRET
+-- DECODIFICADOR DE CONFIGURACIÓN OFUSCADA
 -- ═══════════════════════════════════════════════════════════════
 
-local CONFIG = {
-    -- Tu URL del panel (YA CONFIGURADO)
+local function decode(data)
+    local result = {}
+    for i = 1, #data, 2 do
+        local code = tonumber(data:sub(i, i + 1), 16)
+        if code then
+            table.insert(result, string.char(code))
+        end
+    end
+    return table.concat(result)
+end
+
+local function xorDecode(data, key)
+    local result = {}
+    local keyLen = #key
+    for i = 1, #data do
+        local byte = string.byte(data, i)
+        local keyByte = string.byte(key, ((i - 1) % keyLen) + 1)
+        table.insert(result, string.char(bit32.bxor(byte, keyByte)))
+    end
+    return table.concat(result)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- CONFIGURACIÓN OFUSCADA (EDITAR ESTO)
+-- ═══════════════════════════════════════════════════════════════
+-- Para ofuscar tu configuración:
+-- 1. Convierte tu URL a hexadecimal
+-- 2. Convierte tu API Secret a hexadecimal
+-- Ejemplo: "https://example.com" -> "68747470733a2f2f6578616d706c652e636f6d"
+
+local CONFIG_OBFUSCATED = {
+    -- URL del panel (hex encoded) - REEMPLAZA CON TU URL
+    -- Ejemplo: https://tu-panel.space.z.ai/api/verify
+    _u = "ACTUALIZA_ESTO_CON_TU_URL_EN_HEX",
+    
+    -- URL para reset HWID (hex encoded)
+    _r = "ACTUALIZA_ESTO_CON_TU_URL_RESET_EN_HEX",
+    
+    -- API Secret (hex encoded) - OBLIGATORIO si generaste uno en el panel
+    _s = "",
+    
+    -- Clave XOR para extra seguridad (puedes cambiarla)
+    _k = "5a454b4548554232303234",  
+}
+
+-- Decodificar configuración
+local function getConfig()
+    local key = decode(CONFIG_OBFUSCATED._k)
+    
+    local url = CONFIG_OBFUSCATED._u
+    if url:find("ACTUALIZA") then
+        url = ""  -- Sin configurar
+    else
+        url = decode(url)
+    end
+    
+    local resetUrl = CONFIG_OBFUSCATED._r
+    if resetUrl:find("ACTUALIZA") then
+        resetUrl = ""
+    else
+        resetUrl = decode(resetUrl)
+    end
+    
+    local secret = ""
+    if CONFIG_OBFUSCATED._s ~= "" then
+        secret = decode(CONFIG_OBFUSCATED._s)
+    end
+    
+    return {
+        API_URL = url,
+        RESET_URL = resetUrl,
+        API_SECRET = secret,
+        SCRIPT_NAME = "Mounx",
+        DISCORD_INVITE = "",
+    }
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- VERSIÓN SIMPLE (SI NO QUIERES OFUSCAR)
+-- ═══════════════════════════════════════════════════════════════
+
+local CONFIG_SIMPLE = {
+    -- Tu URL del panel (obtenla del Preview Panel)
     API_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/verify",
     RESET_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/hwid",
     
-    -- API SECRET (IMPORTANTE: Pon el secret que generes en el panel)
-    -- Si no generas un secret, déjalo como empty string ""
+    -- API Secret (IMPORTANTE: Pon el que generes en el panel Dashboard)
     API_SECRET = "",
     
-    -- Nombre del script
-    SCRIPT_NAME = "ZekeHub",
-    
-    -- Discord (para soporte)
-    DISCORD_INVITE = "discord.gg/zekehub",
+    SCRIPT_NAME = "Mounx",
+    DISCORD_INVITE = "",
 }
+
+-- USAR CONFIGURACIÓN SIMPLE (cambia a false para usar ofuscada)
+local USE_OBFUSCATED = false
+
+local CONFIG = USE_OBFUSCATED and getConfig() or CONFIG_SIMPLE
 
 -- ═══════════════════════════════════════════════════════════════
 -- SERVICIOS
@@ -184,15 +266,15 @@ local function verificarKey()
     local playerName = Player.Name
     local playerId = tostring(Player.UserId)
     
-    -- Incluir API Secret en el request
+    -- Construir payload con idUser (nombre de Roblox)
     local data = {
         key = script_key,
-        robloxUser = playerName,
+        idUser = playerName,          -- CAMBIADO: era robloxUser
         robloxUserId = playerId,
         hwid = hwid,
         executor = executor,
         deviceType = deviceType,
-        secret = CONFIG.API_SECRET  -- API Secret para seguridad
+        secret = CONFIG.API_SECRET
     }
     
     local body = HttpService:JSONEncode(data)
