@@ -12,7 +12,7 @@ repeat task.wait(0.1) until game:IsLoaded()
 local CONFIG = {
     -- URL de tu API (cambia esto por tu URL real)
     API_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/verify",
-    RESET_URL = "TU_URL_DEL_PANEL/api/hwid",
+    RESET_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/hwid",
     
     -- Nombre del script
     SCRIPT_NAME = "Mounx",
