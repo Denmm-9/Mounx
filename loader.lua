@@ -87,11 +87,11 @@ end
 
 local CONFIG_SIMPLE = {
     -- Tu URL del panel (obtenla del Preview Panel)
-    API_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/verify",
+    API_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai",
     RESET_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/hwid",
     
     -- API Secret (IMPORTANTE: Pon el que generes en el panel Dashboard)
-    API_SECRET = "",
+    API_SECRET = "9yPZF_1Xwf49Brjm_pEiV-pXxV2OSqTt",
     
     SCRIPT_NAME = "Mounx",
     DISCORD_INVITE = "",
