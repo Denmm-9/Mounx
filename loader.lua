@@ -1,17 +1,14 @@
-
-
 repeat task.wait(0.1) until game:IsLoaded()
 
 -- ═══════════════════════════════════════════════════════════════
--- CONFIGURACIÓN - EDITA SOLO ESTO
+-- CONFIGURACION - EDITA SOLO ESTO
 -- ═══════════════════════════════════════════════════════════════
 
 local CONFIG = {
-    -- URL de tu panel (SIN /api/ al final)
-    -- Ejemplo: "https://tu-panel.vercel.app"
+
     PANEL_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/",
     
-    -- API Secret (GENERADO EN EL DASHBOARD) - OBLIGATORIO
+   
     API_SECRET = "9yPZF_1Xwf49Brjm_pEiV-pXxV2OSqTt",
     
     -- Nombre del script
@@ -22,7 +19,7 @@ local CONFIG = {
 }
 
 -- ═══════════════════════════════════════════════════════════════
--- VERIFICAR CONFIGURACIÓN
+-- VERIFICAR CONFIGURACION
 -- ═══════════════════════════════════════════════════════════════
 
 local function showError(title, message, duration)
@@ -55,7 +52,7 @@ local function showError(title, message, duration)
     local titleLbl = Instance.new("TextLabel")
     titleLbl.Size = UDim2.new(1, 0, 0.3, 0)
     titleLbl.BackgroundTransparency = 1
-    titleLbl.Text = "❌ " .. title
+    titleLbl.Text = title
     titleLbl.TextColor3 = Color3.fromRGB(255, 100, 100)
     titleLbl.TextScaled = true
     titleLbl.Font = Enum.Font.GothamBold
@@ -79,7 +76,7 @@ end
 
 if CONFIG.PANEL_URL == "AQUI_PON_TU_URL_DEL_PANEL" then
     showError(
-        "⚠️ Configuración Requerida", 
+        "Configuracion Requerida", 
         "Edita el loader y pon tu URL del panel\nen CONFIG.PANEL_URL\n\nDiscord: " .. CONFIG.DISCORD_INVITE,
         15
     )
@@ -88,7 +85,7 @@ end
 
 if CONFIG.API_SECRET == "" then
     showError(
-        "⚠️ API Secret Requerido", 
+        "API Secret Requerido", 
         "Genera un API Secret en tu panel\ny ponlo en CONFIG.API_SECRET\n\nDiscord: " .. CONFIG.DISCORD_INVITE,
         15
     )
@@ -108,7 +105,7 @@ local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
 -- ═══════════════════════════════════════════════════════════════
--- DETECCIÓN DE DISPOSITIVO Y EXECUTOR
+-- DETECCION DE DISPOSITIVO Y EXECUTOR
 -- ═══════════════════════════════════════════════════════════════
 
 local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
@@ -146,7 +143,7 @@ local function getHWID()
         return get_hwid()
     end
     
-    -- Fallback: generar HWID basado en información del usuario
+    -- Fallback: generar HWID basado en informacion del usuario
     local hash = 0
     local str = Player.Name .. tostring(Player.UserId) .. game.JobId .. executor
     for i = 1, #str do
@@ -233,13 +230,13 @@ function Utilities.CopyDiscord()
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- VERIFICACIÓN DE KEY
+-- VERIFICACION DE KEY
 -- ═══════════════════════════════════════════════════════════════
 
 local function verificarKey()
     if not script_key then
         NotificationLib:Error(
-            "❌ No Key Provided",
+            "No Key Provided",
             "Set script_key=\"YOUR-KEY\" before loading\n\nKey format: 32 characters\nExample: wLvyKjFHOCcgQpiJqhCdQhujCmCsAQQF\n\nDiscord copiado al portapapeles",
             12,
             Utilities.CopyDiscord
@@ -263,13 +260,13 @@ local function verificarKey()
     local body = HttpService:JSONEncode(data)
     local url = CONFIG.PANEL_URL .. "/api/verify"
     
-    local authNotif = NotificationLib:Info("🔄 Authenticating", "Verifying license key...", 20)
+    local authNotif = NotificationLib:Info("Authenticating", "Verifying license key...", 20)
     local response = httpRequest(url, "POST", body)
     authNotif:Destroy()
     
     if not response or response.StatusCode ~= 200 then
         NotificationLib:Error(
-            "❌ Connection Error",
+            "Connection Error",
             "Could not connect to server\nStatus: " .. tostring(response and response.StatusCode or "unknown") .. "\n\nClick para copiar Discord",
             15,
             Utilities.CopyDiscord
@@ -282,7 +279,7 @@ local function verificarKey()
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- HANDLERS DE RESPUESTA CON MENSAJES DETALLADOS
+-- HANDLERS DE RESPUESTA (SIN EMOJIS)
 -- ═══════════════════════════════════════════════════════════════
 
 local Handlers = {}
@@ -292,19 +289,19 @@ Handlers.KEY_VALID = function(data)
     local timeLeft = Utilities.FormatDuration(data.auth_expire > 0 and (data.auth_expire - os.time()) or -1)
     
     local details = {
-        "✅ Executions: " .. tostring(data.total_executions),
-        "⏰ Expires: " .. timeLeft,
-        "📱 Device: " .. deviceType,
-        "🎮 Executor: " .. executor,
-        "🌍 Location: " .. (data.country or "Unknown") .. (data.city and (", " .. data.city) or "")
+        "Executions: " .. tostring(data.total_executions),
+        "Expires: " .. timeLeft,
+        "Device: " .. deviceType,
+        "Executor: " .. executor,
+        "Location: " .. (data.country or "Unknown") .. (data.city and (", " .. data.city) or "")
     }
     
     if data.note and data.note ~= "" then
-        table.insert(details, "📝 User: " .. data.note)
+        table.insert(details, "User: " .. data.note)
     end
     
     NotificationLib:Success(
-        "✅ Welcome, " .. player.DisplayName,
+        "Welcome, " .. player.DisplayName,
         table.concat(details, "\n"),
         8
     )
@@ -314,7 +311,7 @@ end
 
 Handlers.KEY_HWID_LOCKED = function(data)
     NotificationLib:Warning(
-        "⚠️ HWID Mismatch",
+        "HWID Mismatch",
         "This key is linked to another device!\n\nYour HWID: " .. hwid:sub(1, 16) .. "...\n\nContact admin to reset HWID\nDiscord copiado al portapapeles",
         15,
         Utilities.CopyDiscord
@@ -324,7 +321,7 @@ end
 
 Handlers.EXECUTOR_MISMATCH = function(data)
     NotificationLib:Error(
-        "❌ Wrong Executor",
+        "Wrong Executor",
         "This key is linked to: " .. (data.linkedExecutor or "Unknown") .. "\n\nYou are using: " .. executor .. "\n\nYou cannot change executors!\nDiscord copiado al portapapeles",
         15,
         Utilities.CopyDiscord
@@ -334,7 +331,7 @@ end
 
 Handlers.KEY_EXPIRED = function()
     NotificationLib:Error(
-        "❌ Subscription Expired",
+        "Subscription Expired",
         "Your key has expired!\n\nRenew your subscription to continue\nDiscord copiado al portapapeles",
         15,
         Utilities.CopyDiscord
@@ -344,7 +341,7 @@ end
 
 Handlers.KEY_BANNED = function()
     NotificationLib:Error(
-        "🚫 Access Revoked",
+        "Access Revoked",
         "This key has been disabled!\n\nContact support for help\nDiscord copiado al portapapeles",
         15,
         Utilities.CopyDiscord
@@ -355,7 +352,7 @@ end
 Handlers.KEY_INCORRECT = function()
     Utilities.CopyDiscord()
     NotificationLib:Error(
-        "❌ Invalid Key",
+        "Invalid Key",
         "Key not found in database!\n\nKey format: 32 characters\nExample: wLvyKjFHOCcgQpiJqhCdQhujCmCsAQQF\n\nDiscord: " .. CONFIG.DISCORD_INVITE,
         15,
         Utilities.CopyDiscord
@@ -365,7 +362,7 @@ end
 
 Handlers.HWID_REQUIRED = function()
     NotificationLib:Error(
-        "❌ HWID Required",
+        "HWID Required",
         "Could not detect your HWID!\n\nTry a different executor\nDiscord copiado al portapapeles",
         15,
         Utilities.CopyDiscord
@@ -375,7 +372,7 @@ end
 
 Handlers.UNAUTHORIZED = function()
     NotificationLib:Error(
-        "🔒 Unauthorized",
+        "Unauthorized",
         "Invalid API Secret!\n\nThis loader is not authorized\nContact the developer\nDiscord copiado al portapapeles",
         15,
         Utilities.CopyDiscord
@@ -385,7 +382,7 @@ end
 
 Handlers.USER_MISMATCH = function(data)
     NotificationLib:Error(
-        "❌ Wrong User",
+        "Wrong User",
         "This key is linked to: " .. (data.linkedUser or "Unknown") .. "\n\nYou are: " .. Player.Name .. "\nDiscord copiado al portapapeles",
         15,
         Utilities.CopyDiscord
@@ -395,7 +392,7 @@ end
 
 Handlers.USAGE_LIMIT = function()
     NotificationLib:Error(
-        "❌ Usage Limit",
+        "Usage Limit",
         "This key has reached its usage limit!\n\nContact support for help\nDiscord copiado al portapapeles",
         15,
         Utilities.CopyDiscord
@@ -413,7 +410,7 @@ local success, result = pcall(function()
 end)
 
 if not success then
-    NotificationLib:Error("❌ Error", "Game list failed to load\nCheck your connection", 8)
+    NotificationLib:Error("Error", "Game list failed to load\nCheck your connection", 8)
     return
 end
 
@@ -423,7 +420,7 @@ local loadedGame = false
 local gameInfo = Utilities.GetGameInfo()
 
 -- ═══════════════════════════════════════════════════════════════
--- AUTENTICACIÓN PRINCIPAL
+-- AUTENTICACION PRINCIPAL
 -- ═══════════════════════════════════════════════════════════════
 
 local function Authenticate()
@@ -453,7 +450,7 @@ local function Authenticate()
             end
         end
         
-        -- Universal scripts si no está en la lista
+        -- Universal scripts si no esta en la lista
         if not loadedGame then
             task.wait(2)
             local universalScripts = {}
@@ -470,7 +467,7 @@ local function Authenticate()
                 }
             end
 
-            -- GUI de selección universal
+            -- GUI de seleccion universal
             local ScreenGui = Instance.new("ScreenGui")
             ScreenGui.Name = "UniversalSelector"
             ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -496,7 +493,7 @@ local function Authenticate()
             Title.Size = UDim2.new(1, 0, 1, 0)
             Title.BackgroundTransparency = 1
             Title.Font = Enum.Font.GothamBold
-            Title.Text = "🎮 Universal Loader"
+            Title.Text = "Universal Loader"
             Title.TextScaled = true
             Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 
@@ -531,7 +528,7 @@ local function Authenticate()
             LoadButton.Size = UDim2.new(0.36, 0, 0.7, 0)
             LoadButton.Position = UDim2.new(0.61, 0, 0.15, 0)
             LoadButton.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
-            LoadButton.Text = "▶ Load"
+            LoadButton.Text = "Load"
             LoadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
             LoadButton.TextScaled = true
             LoadButton.Font = Enum.Font.GothamBold
@@ -564,20 +561,20 @@ local function Authenticate()
                 Btn.Parent = Template
                 Btn.Size = UDim2.new(1, 0, 1, 0)
                 Btn.BackgroundTransparency = 1
-                Btn.Text = "▶ " .. info.Name
+                Btn.Text = info.Name
                 Btn.Font = Enum.Font.Gotham
                 Btn.TextScaled = true
                 Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
                 Btn.MouseButton1Click:Connect(function()
                     SelectedScript = info
-                    LastUpdate.Text = "✓ " .. info.Name
+                    LastUpdate.Text = "Selected: " .. info.Name
                 end)
             end
 
             LoadButton.MouseButton1Click:Connect(function()
                 if not SelectedScript then
-                    NotificationLib:Warning("⚠️ No Script", "Select a script first", 4)
+                    NotificationLib:Warning("No Script", "Select a script first", 4)
                     return
                 end
                 loadstring(game:HttpGet(SelectedScript.URL))()
@@ -592,7 +589,7 @@ local function Authenticate()
             handler(data)
         else
             NotificationLib:Error(
-                "❌ Authentication Error",
+                "Authentication Error",
                 "Error code: " .. tostring(code) .. "\n\nDiscord: " .. CONFIG.DISCORD_INVITE,
                 15,
                 Utilities.CopyDiscord
@@ -607,7 +604,7 @@ end
 -- ═══════════════════════════════════════════════════════════════
 
 NotificationLib:Info(
-    "🎮 " .. gameInfo.Name,
+    gameInfo.Name,
     "Executor: " .. executor .. "\nDevice: " .. deviceType .. "\nHWID: " .. hwid:sub(1, 16) .. "...\nLoading " .. CONFIG.SCRIPT_NAME .. "...",
     5
 )
