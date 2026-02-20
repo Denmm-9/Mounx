@@ -1,106 +1,118 @@
+--[[
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║              KEY SYSTEM - SECURE LOADER v2.1                   ║
+    ║              Para Mounx / ZekeHub                              ║
+    ╚═══════════════════════════════════════════════════════════════╝
+    
+    INSTRUCCIONES:
+    1. Configura tu URL del panel en CONFIG.PANEL_URL
+    2. Genera un API Secret en el Dashboard del panel
+    3. Pon el secret en CONFIG.API_SECRET
+    4. El usuario debe poner: script_key="SU-KEY-AQUI" antes de ejecutar
+    
+    CARACTERÍSTICAS:
+    - Key formato: wLvyKjFHOCcgQpiJqhCdQhujCmCsAQQF (32 caracteres)
+    - HWID vinculado al dispositivo
+    - Executor vinculado (no puede cambiar de executor)
+    - Ubicación detectada automáticamente
+    - Notificaciones de error detalladas
+    - Panel dinámico (auto-actualiza)
+]]--
+
 repeat task.wait(0.1) until game:IsLoaded()
 
 -- ═══════════════════════════════════════════════════════════════
--- DECODIFICADOR DE CONFIGURACIÓN OFUSCADA
+-- CONFIGURACIÓN - EDITA SOLO ESTO
 -- ═══════════════════════════════════════════════════════════════
 
-local function decode(data)
-    local result = {}
-    for i = 1, #data, 2 do
-        local code = tonumber(data:sub(i, i + 1), 16)
-        if code then
-            table.insert(result, string.char(code))
-        end
-    end
-    return table.concat(result)
-end
-
-local function xorDecode(data, key)
-    local result = {}
-    local keyLen = #key
-    for i = 1, #data do
-        local byte = string.byte(data, i)
-        local keyByte = string.byte(key, ((i - 1) % keyLen) + 1)
-        table.insert(result, string.char(bit32.bxor(byte, keyByte)))
-    end
-    return table.concat(result)
-end
-
--- ═══════════════════════════════════════════════════════════════
--- CONFIGURACIÓN OFUSCADA (EDITAR ESTO)
--- ═══════════════════════════════════════════════════════════════
--- Para ofuscar tu configuración:
--- 1. Convierte tu URL a hexadecimal
--- 2. Convierte tu API Secret a hexadecimal
--- Ejemplo: "https://example.com" -> "68747470733a2f2f6578616d706c652e636f6d"
-
-local CONFIG_OBFUSCATED = {
-    -- URL del panel (hex encoded) - REEMPLAZA CON TU URL
-    -- Ejemplo: https://tu-panel.space.z.ai/api/verify
-    _u = "ACTUALIZA_ESTO_CON_TU_URL_EN_HEX",
+local CONFIG = {
+    -- URL de tu panel (SIN /api/ al final)
+    -- Ejemplo: "https://tu-panel.vercel.app"
+    PANEL_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/",
     
-    -- URL para reset HWID (hex encoded)
-    _r = "ACTUALIZA_ESTO_CON_TU_URL_RESET_EN_HEX",
-    
-    -- API Secret (hex encoded) - OBLIGATORIO si generaste uno en el panel
-    _s = "",
-    
-    -- Clave XOR para extra seguridad (puedes cambiarla)
-    _k = "5a454b4548554232303234",  
-}
-
--- Decodificar configuración
-local function getConfig()
-    local key = decode(CONFIG_OBFUSCATED._k)
-    
-    local url = CONFIG_OBFUSCATED._u
-    if url:find("ACTUALIZA") then
-        url = ""  -- Sin configurar
-    else
-        url = decode(url)
-    end
-    
-    local resetUrl = CONFIG_OBFUSCATED._r
-    if resetUrl:find("ACTUALIZA") then
-        resetUrl = ""
-    else
-        resetUrl = decode(resetUrl)
-    end
-    
-    local secret = ""
-    if CONFIG_OBFUSCATED._s ~= "" then
-        secret = decode(CONFIG_OBFUSCATED._s)
-    end
-    
-    return {
-        API_URL = url,
-        RESET_URL = resetUrl,
-        API_SECRET = secret,
-        SCRIPT_NAME = "Mounx",
-        DISCORD_INVITE = "",
-    }
-end
-
--- ═══════════════════════════════════════════════════════════════
--- VERSIÓN SIMPLE (SI NO QUIERES OFUSCAR)
--- ═══════════════════════════════════════════════════════════════
-
-local CONFIG_SIMPLE = {
-    -- Tu URL del panel (obtenla del Preview Panel)
-    API_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/verify",
-    RESET_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/hwid",
-    
-    -- API Secret (IMPORTANTE: Pon el que generes en el panel Dashboard)
+    -- API Secret (GENERADO EN EL DASHBOARD) - OBLIGATORIO
     API_SECRET = "9yPZF_1Xwf49Brjm_pEiV-pXxV2OSqTt",
     
+    -- Nombre del script
     SCRIPT_NAME = "Mounx",
-    DISCORD_INVITE = "",
+    
+    -- Discord para soporte
+    DISCORD_INVITE = "discord.gg/rrY66GEgmK",
 }
 
--- USAR CONFIGURACIÓN SIMPLE (cambia a false para usar ofuscada)
-local USE_OBFUSCATED = false
+-- ═══════════════════════════════════════════════════════════════
+-- VERIFICAR CONFIGURACIÓN
+-- ═══════════════════════════════════════════════════════════════
 
-local CONFIG = USE_OBFUSCATED and getConfig() or CONFIG_SIMPLE
+local function showError(title, message, duration)
+    duration = duration or 10
+    local players = game:GetService("Players")
+    local player = players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ErrorNotification"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = playerGui
+    
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0.5, 0, 0.25, 0)
+    frame.Position = UDim2.new(0.25, 0, 0.375, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    frame.BorderSizePixel = 0
+    frame.Parent = screenGui
+    
+    local corners = Instance.new("UICorner")
+    corners.CornerRadius = UDim.new(0, 12)
+    corners.Parent = frame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 80, 80)
+    stroke.Thickness = 2
+    stroke.Parent = frame
+    
+    local titleLbl = Instance.new("TextLabel")
+    titleLbl.Size = UDim2.new(1, 0, 0.3, 0)
+    titleLbl.BackgroundTransparency = 1
+    titleLbl.Text = "❌ " .. title
+    titleLbl.TextColor3 = Color3.fromRGB(255, 100, 100)
+    titleLbl.TextScaled = true
+    titleLbl.Font = Enum.Font.GothamBold
+    titleLbl.Parent = frame
+    
+    local msgLbl = Instance.new("TextLabel")
+    msgLbl.Size = UDim2.new(1, -20, 0.6, 0)
+    msgLbl.Position = UDim2.new(0, 10, 0.35, 0)
+    msgLbl.BackgroundTransparency = 1
+    msgLbl.Text = message
+    msgLbl.TextColor3 = Color3.fromRGB(220, 220, 220)
+    msgLbl.TextScaled = true
+    msgLbl.Font = Enum.Font.Gotham
+    msgLbl.TextWrapped = true
+    msgLbl.Parent = frame
+    
+    task.delay(duration, function()
+        screenGui:Destroy()
+    end)
+end
+
+if CONFIG.PANEL_URL == "AQUI_PON_TU_URL_DEL_PANEL" then
+    showError(
+        "⚠️ Configuración Requerida", 
+        "Edita el loader y pon tu URL del panel\nen CONFIG.PANEL_URL\n\nDiscord: " .. CONFIG.DISCORD_INVITE,
+        15
+    )
+    return
+end
+
+if CONFIG.API_SECRET == "" then
+    showError(
+        "⚠️ API Secret Requerido", 
+        "Genera un API Secret en tu panel\ny ponlo en CONFIG.API_SECRET\n\nDiscord: " .. CONFIG.DISCORD_INVITE,
+        15
+    )
+    return
+end
 
 -- ═══════════════════════════════════════════════════════════════
 -- SERVICIOS
@@ -135,37 +147,34 @@ end
 local executor = getExecutor()
 
 -- ═══════════════════════════════════════════════════════════════
--- OBTENER HWID
+-- OBTENER HWID (Hardware ID)
 -- ═══════════════════════════════════════════════════════════════
 
 local function getHWID()
-    -- Synapse X
+    -- Intentar obtener HWID real del executor
     if syn and syn.gethwid then
         return syn.gethwid()
     end
-    
-    -- Script-Ware
     if gethwid then
         return gethwid()
     end
-    
-    -- Otros executors comunes
     if hwid then
         return hwid
     end
-    
     if get_hwid then
         return get_hwid()
     end
     
-    -- Fallback para executors sin HWID
+    -- Fallback: generar HWID basado en información del usuario
     local hash = 0
-    local str = Player.Name .. tostring(Player.UserId) .. game.JobId
+    local str = Player.Name .. tostring(Player.UserId) .. game.JobId .. executor
     for i = 1, #str do
         hash = (hash * 31 + string.byte(str, i)) % 2147483647
     end
     return string.format("GEN-%08X-%08X", hash, hash * 17 % 2147483647)
 end
+
+local hwid = getHWID()
 
 -- ═══════════════════════════════════════════════════════════════
 -- HTTP REQUEST
@@ -179,17 +188,12 @@ local function httpRequest(url, method, body)
         Body = body
     }
     
-    -- Synapse X
     if syn and syn.request then
         return syn.request(options)
     end
-    
-    -- Script-Ware / Universal
     if request then
         return request(options)
     end
-    
-    -- HttpService estándar
     if method == "GET" then
         local success, result = pcall(function()
             return HttpService:GetAsync(url)
@@ -248,28 +252,26 @@ function Utilities.CopyDiscord()
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- VERIFICACIÓN DE KEY CON API SECRET
+-- VERIFICACIÓN DE KEY
 -- ═══════════════════════════════════════════════════════════════
 
 local function verificarKey()
     if not script_key then
         NotificationLib:Error(
-            "Authentication Failed",
-            "No key provided\nCheck your key and try again\n\nClick to copy Discord invite",
-            10,
+            "❌ No Key Provided",
+            "Set script_key=\"YOUR-KEY\" before loading\n\nKey format: 32 characters\nExample: wLvyKjFHOCcgQpiJqhCdQhujCmCsAQQF\n\nDiscord copiado al portapapeles",
+            12,
             Utilities.CopyDiscord
         )
-        return false, "NO_KEY"
+        return false, "NO_KEY", nil
     end
     
-    local hwid = getHWID()
     local playerName = Player.Name
     local playerId = tostring(Player.UserId)
     
-    -- Construir payload con idUser (nombre de Roblox)
     local data = {
         key = script_key,
-        idUser = playerName,          -- CAMBIADO: era robloxUser
+        idUser = playerName,
         robloxUserId = playerId,
         hwid = hwid,
         executor = executor,
@@ -278,50 +280,28 @@ local function verificarKey()
     }
     
     local body = HttpService:JSONEncode(data)
+    local url = CONFIG.PANEL_URL .. "/api/verify"
     
-    local authNotif = NotificationLib:Info("Authenticating", "Verifying license key...", 20)
-    local response = httpRequest(CONFIG.API_URL, "POST", body)
+    local authNotif = NotificationLib:Info("🔄 Authenticating", "Verifying license key...", 20)
+    local response = httpRequest(url, "POST", body)
     authNotif:Destroy()
     
     if not response or response.StatusCode ~= 200 then
         NotificationLib:Error(
-            "Connection Error",
-            "Could not connect to server\nTry again later\n\nClick to copy Discord invite",
-            10,
+            "❌ Connection Error",
+            "Could not connect to server\nStatus: " .. tostring(response and response.StatusCode or "unknown") .. "\n\nClick para copiar Discord",
+            15,
             Utilities.CopyDiscord
         )
-        return false, "CONNECTION_ERROR"
+        return false, "CONNECTION_ERROR", nil
     end
     
     local result = HttpService:JSONDecode(response.Body)
     return result.success, result.code, result
 end
 
-local function solicitarResetHwid(reason)
-    if not script_key then
-        NotificationLib:Error("Error", "No key provided", 6)
-        return false
-    end
-    
-    local data = {
-        key = script_key,
-        reason = reason or "Requested from client",
-        secret = CONFIG.API_SECRET
-    }
-    
-    local body = HttpService:JSONEncode(data)
-    local response = httpRequest(CONFIG.RESET_URL, "POST", body)
-    
-    if response and response.StatusCode == 200 then
-        local result = HttpService:JSONDecode(response.Body)
-        return result.success, result.message or result.error
-    end
-    
-    return false, "Connection error"
-end
-
 -- ═══════════════════════════════════════════════════════════════
--- HANDLERS DE RESPUESTA
+-- HANDLERS DE RESPUESTA CON MENSAJES DETALLADOS
 -- ═══════════════════════════════════════════════════════════════
 
 local Handlers = {}
@@ -331,18 +311,19 @@ Handlers.KEY_VALID = function(data)
     local timeLeft = Utilities.FormatDuration(data.auth_expire > 0 and (data.auth_expire - os.time()) or -1)
     
     local details = {
-        "Executions: " .. tostring(data.total_executions),
-        "Expires: " .. timeLeft,
-        "Device: " .. deviceType,
-        "Executor: " .. executor
+        "✅ Executions: " .. tostring(data.total_executions),
+        "⏰ Expires: " .. timeLeft,
+        "📱 Device: " .. deviceType,
+        "🎮 Executor: " .. executor,
+        "🌍 Location: " .. (data.country or "Unknown") .. (data.city and (", " .. data.city) or "")
     }
     
     if data.note and data.note ~= "" then
-        table.insert(details, "Note: " .. data.note)
+        table.insert(details, "📝 User: " .. data.note)
     end
     
     NotificationLib:Success(
-        "Welcome, " .. player.DisplayName,
+        "✅ Welcome, " .. player.DisplayName,
         table.concat(details, "\n"),
         8
     )
@@ -352,9 +333,19 @@ end
 
 Handlers.KEY_HWID_LOCKED = function(data)
     NotificationLib:Warning(
-        "HWID Mismatch",
-        "This key is linked to another device\nReset via Dashboard or Discord bot\n\nClick to copy Discord invite",
-        12,
+        "⚠️ HWID Mismatch",
+        "This key is linked to another device!\n\nYour HWID: " .. hwid:sub(1, 16) .. "...\n\nContact admin to reset HWID\nDiscord copiado al portapapeles",
+        15,
+        Utilities.CopyDiscord
+    )
+    return false
+end
+
+Handlers.EXECUTOR_MISMATCH = function(data)
+    NotificationLib:Error(
+        "❌ Wrong Executor",
+        "This key is linked to: " .. (data.linkedExecutor or "Unknown") .. "\n\nYou are using: " .. executor .. "\n\nYou cannot change executors!\nDiscord copiado al portapapeles",
+        15,
         Utilities.CopyDiscord
     )
     return false
@@ -362,9 +353,9 @@ end
 
 Handlers.KEY_EXPIRED = function()
     NotificationLib:Error(
-        "Subscription Expired",
-        "Your key has expired\nRenew to continue using " .. CONFIG.SCRIPT_NAME .. "\n\nClick to copy Discord invite",
-        12,
+        "❌ Subscription Expired",
+        "Your key has expired!\n\nRenew your subscription to continue\nDiscord copiado al portapapeles",
+        15,
         Utilities.CopyDiscord
     )
     return false
@@ -372,9 +363,9 @@ end
 
 Handlers.KEY_BANNED = function()
     NotificationLib:Error(
-        "Access Revoked",
-        "This key has been blacklisted\nContact support if you believe this is an error\n\nClick to copy Discord invite",
-        12,
+        "🚫 Access Revoked",
+        "This key has been disabled!\n\nContact support for help\nDiscord copiado al portapapeles",
+        15,
         Utilities.CopyDiscord
     )
     return false
@@ -383,9 +374,9 @@ end
 Handlers.KEY_INCORRECT = function()
     Utilities.CopyDiscord()
     NotificationLib:Error(
-        "Invalid Key",
-        "Key not found in database\nDiscord invite copied to clipboard\n\nClick to copy again",
-        12,
+        "❌ Invalid Key",
+        "Key not found in database!\n\nKey format: 32 characters\nExample: wLvyKjFHOCcgQpiJqhCdQhujCmCsAQQF\n\nDiscord: " .. CONFIG.DISCORD_INVITE,
+        15,
         Utilities.CopyDiscord
     )
     return false
@@ -393,9 +384,9 @@ end
 
 Handlers.HWID_REQUIRED = function()
     NotificationLib:Error(
-        "HWID Required",
-        "Could not detect your HWID\nTry using a different executor\n\nClick to copy Discord invite",
-        12,
+        "❌ HWID Required",
+        "Could not detect your HWID!\n\nTry a different executor\nDiscord copiado al portapapeles",
+        15,
         Utilities.CopyDiscord
     )
     return false
@@ -403,16 +394,36 @@ end
 
 Handlers.UNAUTHORIZED = function()
     NotificationLib:Error(
-        "Unauthorized",
-        "Invalid API Secret\nContact the developer\n\nClick to copy Discord invite",
-        12,
+        "🔒 Unauthorized",
+        "Invalid API Secret!\n\nThis loader is not authorized\nContact the developer\nDiscord copiado al portapapeles",
+        15,
+        Utilities.CopyDiscord
+    )
+    return false
+end
+
+Handlers.USER_MISMATCH = function(data)
+    NotificationLib:Error(
+        "❌ Wrong User",
+        "This key is linked to: " .. (data.linkedUser or "Unknown") .. "\n\nYou are: " .. Player.Name .. "\nDiscord copiado al portapapeles",
+        15,
+        Utilities.CopyDiscord
+    )
+    return false
+end
+
+Handlers.USAGE_LIMIT = function()
+    NotificationLib:Error(
+        "❌ Usage Limit",
+        "This key has reached its usage limit!\n\nContact support for help\nDiscord copiado al portapapeles",
+        15,
         Utilities.CopyDiscord
     )
     return false
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- GAME LIST Y CARGA DE SCRIPTS
+-- GAME LIST Y CARGA DE SCRIPTS (MOUNX)
 -- ═══════════════════════════════════════════════════════════════
 
 local ListURL = "https://raw.githubusercontent.com/Denmm-9/Mounx/main/Game_list.lua"
@@ -421,7 +432,7 @@ local success, result = pcall(function()
 end)
 
 if not success then
-    NotificationLib:Error("Error", "Game list failed to load", 6)
+    NotificationLib:Error("❌ Error", "Game list failed to load\nCheck your connection", 8)
     return
 end
 
@@ -429,14 +440,6 @@ local games = result
 local loadedGame = false
 
 local gameInfo = Utilities.GetGameInfo()
-
-local isInList = false
-for placeId in pairs(games) do
-    if game.PlaceId == placeId then
-        isInList = true
-        break
-    end
-end
 
 -- ═══════════════════════════════════════════════════════════════
 -- AUTENTICACIÓN PRINCIPAL
@@ -451,10 +454,7 @@ local function Authenticate()
             handler(data.data or data)
         end
         
-        -- ═════════════════════════════════════════════════════════
         -- CARGAR SCRIPT DEL JUEGO
-        -- ═════════════════════════════════════════════════════════
-        
         for placeId, gameData in pairs(games) do
             if game.PlaceId == placeId then
                 local scriptUrl = nil
@@ -515,7 +515,7 @@ local function Authenticate()
             Title.Size = UDim2.new(1, 0, 1, 0)
             Title.BackgroundTransparency = 1
             Title.Font = Enum.Font.GothamBold
-            Title.Text = "Universal Loader"
+            Title.Text = "🎮 Universal Loader"
             Title.TextScaled = true
             Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 
@@ -550,7 +550,7 @@ local function Authenticate()
             LoadButton.Size = UDim2.new(0.36, 0, 0.7, 0)
             LoadButton.Position = UDim2.new(0.61, 0, 0.15, 0)
             LoadButton.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
-            LoadButton.Text = "Load"
+            LoadButton.Text = "▶ Load"
             LoadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
             LoadButton.TextScaled = true
             LoadButton.Font = Enum.Font.GothamBold
@@ -583,20 +583,20 @@ local function Authenticate()
                 Btn.Parent = Template
                 Btn.Size = UDim2.new(1, 0, 1, 0)
                 Btn.BackgroundTransparency = 1
-                Btn.Text = "Select " .. info.Name
+                Btn.Text = "▶ " .. info.Name
                 Btn.Font = Enum.Font.Gotham
                 Btn.TextScaled = true
                 Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
                 Btn.MouseButton1Click:Connect(function()
                     SelectedScript = info
-                    LastUpdate.Text = "Selected: " .. info.Name
+                    LastUpdate.Text = "✓ " .. info.Name
                 end)
             end
 
             LoadButton.MouseButton1Click:Connect(function()
                 if not SelectedScript then
-                    NotificationLib:Warning("No Script", "Select a script first", 4)
+                    NotificationLib:Warning("⚠️ No Script", "Select a script first", 4)
                     return
                 end
                 loadstring(game:HttpGet(SelectedScript.URL))()
@@ -611,9 +611,9 @@ local function Authenticate()
             handler(data)
         else
             NotificationLib:Error(
-                "Authentication Error",
-                "Code: " .. tostring(code) .. "\nDiscord invite copied to clipboard\n\nClick to copy again",
-                12,
+                "❌ Authentication Error",
+                "Error code: " .. tostring(code) .. "\n\nDiscord: " .. CONFIG.DISCORD_INVITE,
+                15,
                 Utilities.CopyDiscord
             )
         end
@@ -626,8 +626,8 @@ end
 -- ═══════════════════════════════════════════════════════════════
 
 NotificationLib:Info(
-    gameInfo.Name,
-    "Executor: " .. executor .. "\nDevice: " .. deviceType .. "\nLoading " .. CONFIG.SCRIPT_NAME .. "...",
+    "🎮 " .. gameInfo.Name,
+    "Executor: " .. executor .. "\nDevice: " .. deviceType .. "\nHWID: " .. hwid:sub(1, 16) .. "...\nLoading " .. CONFIG.SCRIPT_NAME .. "...",
     5
 )
 
