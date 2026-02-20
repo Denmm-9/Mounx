@@ -87,7 +87,7 @@ end
 
 local CONFIG_SIMPLE = {
     -- Tu URL del panel (obtenla del Preview Panel)
-    API_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai",
+    API_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/verify",
     RESET_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/hwid",
     
     -- API Secret (IMPORTANTE: Pon el que generes en el panel Dashboard)
