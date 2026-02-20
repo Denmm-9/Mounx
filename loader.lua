@@ -1,24 +1,23 @@
---[[USO:
-    script_key="TU-KEY-AQUI"
-    loadstring(game:HttpGet("URL_DE_TU_LOADER"))()
-]]--
-
 repeat task.wait(0.1) until game:IsLoaded()
 
 -- ═══════════════════════════════════════════════════════════════
--- CONFIGURACIÓN
+-- CONFIGURACIÓN - TU URL Y API SECRET
 -- ═══════════════════════════════════════════════════════════════
 
 local CONFIG = {
-    -- URL de tu API (cambia esto por tu URL real)
-    API_URL = "https://xyz-preview-abc123.space.z.ai/api/verify",
+    -- Tu URL del panel (YA CONFIGURADO)
+    API_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/verify",
     RESET_URL = "https://preview-chat-83ea5622-7795-4219-b50e-23f212104690.space.z.ai/api/hwid",
     
+    -- API SECRET (IMPORTANTE: Pon el secret que generes en el panel)
+    -- Si no generas un secret, déjalo como empty string ""
+    API_SECRET = "",
+    
     -- Nombre del script
-    SCRIPT_NAME = "Mounx",
+    SCRIPT_NAME = "ZekeHub",
     
     -- Discord (para soporte)
-    DISCORD_INVITE = "https://discord.gg/rrY66GEgmK",
+    DISCORD_INVITE = "discord.gg/zekehub",
 }
 
 -- ═══════════════════════════════════════════════════════════════
@@ -43,7 +42,7 @@ local deviceType = isMobile and "Mobile" or "PC"
 local function getExecutor()
     if identifyexecutor then
         return identifyexecutor()
-    elseif syn and syn.getexecutor_name then
+    elseif syn and syn.get_executor_name then
         return syn.get_executor_name()
     elseif getexecutorname then
         return getexecutorname()
@@ -167,7 +166,7 @@ function Utilities.CopyDiscord()
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- VERIFICACIÓN DE KEY
+-- VERIFICACIÓN DE KEY CON API SECRET
 -- ═══════════════════════════════════════════════════════════════
 
 local function verificarKey()
@@ -185,13 +184,15 @@ local function verificarKey()
     local playerName = Player.Name
     local playerId = tostring(Player.UserId)
     
+    -- Incluir API Secret en el request
     local data = {
         key = script_key,
         robloxUser = playerName,
         robloxUserId = playerId,
         hwid = hwid,
         executor = executor,
-        deviceType = deviceType
+        deviceType = deviceType,
+        secret = CONFIG.API_SECRET  -- API Secret para seguridad
     }
     
     local body = HttpService:JSONEncode(data)
@@ -222,7 +223,8 @@ local function solicitarResetHwid(reason)
     
     local data = {
         key = script_key,
-        reason = reason or "Requested from client"
+        reason = reason or "Requested from client",
+        secret = CONFIG.API_SECRET
     }
     
     local body = HttpService:JSONEncode(data)
@@ -311,6 +313,16 @@ Handlers.HWID_REQUIRED = function()
     NotificationLib:Error(
         "HWID Required",
         "Could not detect your HWID\nTry using a different executor\n\nClick to copy Discord invite",
+        12,
+        Utilities.CopyDiscord
+    )
+    return false
+end
+
+Handlers.UNAUTHORIZED = function()
+    NotificationLib:Error(
+        "Unauthorized",
+        "Invalid API Secret\nContact the developer\n\nClick to copy Discord invite",
         12,
         Utilities.CopyDiscord
     )
