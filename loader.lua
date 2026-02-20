@@ -1,23 +1,4 @@
---[[
-    ╔═══════════════════════════════════════════════════════════════╗
-    ║              KEY SYSTEM - SECURE LOADER v2.1                   ║
-    ║              Para Mounx / ZekeHub                              ║
-    ╚═══════════════════════════════════════════════════════════════╝
-    
-    INSTRUCCIONES:
-    1. Configura tu URL del panel en CONFIG.PANEL_URL
-    2. Genera un API Secret en el Dashboard del panel
-    3. Pon el secret en CONFIG.API_SECRET
-    4. El usuario debe poner: script_key="SU-KEY-AQUI" antes de ejecutar
-    
-    CARACTERÍSTICAS:
-    - Key formato: wLvyKjFHOCcgQpiJqhCdQhujCmCsAQQF (32 caracteres)
-    - HWID vinculado al dispositivo
-    - Executor vinculado (no puede cambiar de executor)
-    - Ubicación detectada automáticamente
-    - Notificaciones de error detalladas
-    - Panel dinámico (auto-actualiza)
-]]--
+
 
 repeat task.wait(0.1) until game:IsLoaded()
 
